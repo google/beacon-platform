@@ -29,7 +29,7 @@ CocoaPod based and quite easy to get running.
 	(Do NOT open the _.xcodeproj/_, only use the _.xcworkspace/_ !!)
 
 1. Go to Google API Cloud Developer Console thingie,
-   [console.developers.google.com](console.developers.google.com)
+   [console.developers.google.com](https://console.developers.google.com)
 1. Create a new project (via the dropdown at the top). Enable the following
    APIs (on the left side, click '*APIs & auth*', then '*APIs*'):
 
