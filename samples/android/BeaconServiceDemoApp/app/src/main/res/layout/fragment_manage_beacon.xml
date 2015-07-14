@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+  <GridLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:alignmentMode="alignBounds"
+      android:columnCount="3"
+      android:useDefaultMargins="true"
+      >
+
+    <TextView
+        android:text="Beacon Details"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:layout_columnSpan="3"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <TextView
+        android:text="Type"
+        android:layout_column="0"
+        android:layout_gravity="end"
+        />
+
+    <TextView
+        android:id="@+id/advertisedId_Type"
+        android:layout_column="1"
+        />
+
+    <TextView
+        android:text="ID"
+        android:layout_column="0"
+        android:layout_gravity="end"
+        />
+
+    <TextView
+        android:id="@+id/advertisedId_Id"
+        android:layout_column="1"
+        android:layout_width="@dimen/col_1_width"
+        />
+
+    <TextView
+        android:layout_column="0"
+        android:layout_gravity="end"
+        android:text="Status"
+        />
+
+    <TextView
+        android:id="@+id/status"
+        android:text="@string/click_to_set"
+        android:layout_width="@dimen/col_1_width"
+        />
+
+    <ImageView
+        android:id="@+id/mapView"
+        android:layout_columnSpan="3"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <TextView
+        android:layout_column="0"
+        android:layout_gravity="end"
+        android:text="Coordinates"
+        />
+
+    <TextView
+        android:id="@+id/latLng"
+        android:text="@string/click_to_set"
+        android:layout_width="@dimen/col_1_width"
+        android:drawableEnd="@drawable/ic_action_mode_edit"
+        android:drawablePadding="5dp"
+        />
+
+    <TextView
+        android:layout_column="0"
+        android:layout_gravity="end"
+        android:text="Place ID"
+        />
+
+    <TextView
+        android:id="@+id/placeId"
+        android:text="@string/click_to_set"
+        android:layout_width="@dimen/col_1_width"
+        />
+
+    <TextView
+        android:layout_column="0"
+        android:layout_gravity="end"
+        android:text="Stability"
+        />
+
+    <TextView
+        android:id="@+id/expectedStability"
+        android:text="@string/click_to_set"
+        android:layout_width="@dimen/col_1_width"
+        android:drawableEnd="@drawable/ic_action_mode_edit"
+        android:drawablePadding="5dp"
+        />
+
+    <TextView
+        android:layout_column="0"
+        android:layout_gravity="end"
+        android:text="Description"
+        />
+
+    <TextView
+        android:id="@+id/description"
+        android:text="@string/click_to_set"
+        android:layout_width="@dimen/col_1_width"
+        android:drawableEnd="@drawable/ic_action_mode_edit"
+        android:drawablePadding="5dp"
+        />
+
+    <Button
+        android:id="@+id/actionButton"
+        android:layout_columnSpan="3"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <Button
+        android:id="@+id/decommissionButton"
+        android:layout_columnSpan="3"
+        android:enabled="false"
+        android:text="Decommission"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"
+        />
+
+    <View
+        android:id="@+id/attachmentsDivider"
+        android:layout_height="1dip"
+        android:layout_columnSpan="3"
+        android:layout_gravity="center_horizontal"
+        android:background="#AAAAAA"
+        />
+
+    <TextView
+        android:id="@+id/attachmentsLabel"
+        android:text="Attachments"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:layout_columnSpan="3"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <TableLayout
+        android:id="@+id/attachmentsTableLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_columnSpan="3"
+        android:layout_gravity="center_horizontal"
+        android:padding="5dp"
+        android:stretchColumns="1"
+        />
+
+  </GridLayout>
+
+</ScrollView>

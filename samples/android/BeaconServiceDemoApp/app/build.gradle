@@ -1,0 +1,28 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
+    defaultConfig {
+        applicationId "com.google.sample.beaconservice"
+        minSdkVersion 22
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled = true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile 'com.google.android.gms:play-services:7.5.0'
+    compile 'com.mcxiaoke.volley:library:1.0.15'
+    compile 'joda-time:joda-time:2.8'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
