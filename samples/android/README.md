@@ -26,7 +26,7 @@ If you use Android Studio these dependencies are managed automatically for you. 
 ## Building and Running
 Import the BeaconServiceDemoApp folder into Android Studio as an existing project and select `Run > Run app`.
 
-When launched click the `scan` button to discover any nearby [Eddystone](https://github.com/google/eddystone) devices broadcasting an Eddystone-UID frame. (If you don't have an Eddystone device around you can use the [TxEddystone-UID app](https://github.com/google/eddystone/eddystone-uid/tools/txeddystone-uid) to turn a compatible phone into one.) Detected beacons will be listed with their IDs, ordered from strongest signal to weakest.
+When launched click the `scan` button to discover any nearby [Eddystone](https://github.com/google/eddystone) devices broadcasting an Eddystone-UID frame. (If you don't have an Eddystone device around you can use the [TxEddystone-UID app](https://github.com/google/eddystone/tree/master/eddystone-uid/tools/txeddystone-uid) to turn a compatible phone into one.) Detected beacons will be listed with their IDs, ordered from strongest signal to weakest.
 
 The app will then use the [beacons.get](https://developers.google.com/beacons/proximity/reference/rest/v1beta1/beacons/get) method to fetch the status of each beacon, updating the beacons icon as the results are returned. The icons correspond to the beacon's status:
 
