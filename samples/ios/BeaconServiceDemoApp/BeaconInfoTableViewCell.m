@@ -156,7 +156,7 @@
         // Received beacon location do not conform to required values.
         // In case no values have been entered for latitude or longitutide "0,0" is inferred as default value.
         
-        // Create an hougin for the normalized beacon location
+        // Create an housing for the normalized beacon location
         NSMutableDictionary *normalizedBeaconLocation = [NSMutableDictionary dictionary];
         
         // Normalize longitude if needed
