@@ -1,0 +1,6 @@
+BeaconServiceDemoApp.xcodeproj/xcuserdata/
+BeaconServiceDemoApp.xcworkspace/
+Pods/
+Podfile.lock
+GoogleService-Info.plist
+APIKey.plist
