@@ -87,16 +87,17 @@ CLLocationCoordinate2D const kDefaultLocationCoordinate2D = (CLLocationCoordinat
         }
     ];
   } else if (beaconLocation[@"latLng"]){
+    
+    CLLocationCoordinate2D coordinate = CLLocationCoordinate2DMake([beaconLocation[@"latLng"][@"latitude"] doubleValue], [beaconLocation[@"latLng"][@"longitude"] doubleValue]);
+    
     NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
     [text appendAttributedString:[self makeTextMediumBold:@"Lat: "]];
-    [text appendAttributedString:[[NSAttributedString alloc] initWithString:[(NSNumber *)beaconLocation[@"latLng"][@"latitude"] stringValue]]];
+    [text appendAttributedString:[[NSAttributedString alloc] initWithString:[@(coordinate.latitude) stringValue]]];
     [text appendAttributedString:[self makeTextMediumBold:@" Lon: "]];
-    [text appendAttributedString:[[NSAttributedString alloc] initWithString:[(NSNumber *)beaconLocation[@"latLng"][@"longitude"] stringValue]]];
+    [text appendAttributedString:[[NSAttributedString alloc] initWithString:[@(coordinate.longitude) stringValue]]];
     _beaconLatLngLabel.attributedText = text;
 
-    double lat = [(NSNumber *)beaconLocation[@"latLng"][@"latitude"] doubleValue];
-    double lon = [(NSNumber *)beaconLocation[@"latLng"][@"longitude"] doubleValue];
-    [self setMapViewToLatitude:lat longitude:lon];
+    [self setMapViewToLatitude:coordinate.latitude longitude:coordinate.longitude];
   }
   else {
     NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
