@@ -83,23 +83,29 @@
           }
         }
     ];
-  } else {
-    
-    beaconLocation = [self normalizedBeaconLocationFromBeaconLocationInfo:beaconLocation];
-      
+  } else if (beaconLocation[@"latLng"]){
     NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
     [text appendAttributedString:[self makeTextMediumBold:@"Lat: "]];
     [text appendAttributedString:[[NSAttributedString alloc]
-        initWithString:[(NSNumber *)beaconLocation[@"latitude"] stringValue]]];
+                                  initWithString:[(NSNumber *)beaconLocation[@"latLng"][@"latitude"] stringValue]]];
     [text appendAttributedString:[self makeTextMediumBold:@" Lon: "]];
     [text appendAttributedString:[[NSAttributedString alloc]
-        initWithString:[(NSNumber *)beaconLocation[@"longitude"] stringValue]]];
+                                  initWithString:[(NSNumber *)beaconLocation[@"latLng"][@"longitude"] stringValue]]];
     _beaconLatLngLabel.attributedText = text;
-
-    double lat = [(NSNumber *)beaconLocation[@"latitude"] doubleValue];
-    double lon = [(NSNumber *)beaconLocation[@"longitude"] doubleValue];
+    
+    double lat = [(NSNumber *)beaconLocation[@"latLng"][@"latitude"] doubleValue];
+    double lon = [(NSNumber *)beaconLocation[@"latLng"][@"longitude"] doubleValue];
     [self setMapViewToLatitude:lat longitude:lon];
   }
+else {
+  NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
+  [text appendAttributedString:[self makeTextMediumBold:@"Location: "]];
+  [text appendAttributedString:[[NSAttributedString alloc] initWithString:@"(not specified)"]];
+  _beaconLatLngLabel.attributedText = text;
+  
+  // Just set the location to somewhere known instead of (0,0) which is in the Atlantic somewhere.
+  [self setMapViewToLatitude:37.42242 longitude:-122.08430];
+}
 }
 
 - (void)setMapViewToLatitude:(double)latitude longitude:(double)longitude {
@@ -137,44 +143,6 @@
               value:[UIFont fontWithName:@"Helvetica-Bold" size:16.0]
               range:NSMakeRange(0, [str length])];
   return str;
-}
-
-#pragma mark Helper method
-
-/**
- *  Convenience method for normaliz-ing a beacon location dictionary to properly conform to required values.
- *
- *  @param beaconLocation A beacon location info dictionary.
- *
- *  @return A normalized beacon location with missing values from in input beacon location replaced by default values.
- *
- *  @discuss Missing longitude and latitude values are replaced with default value: 0,0
- */
-- (NSDictionary *)normalizedBeaconLocationFromBeaconLocationInfo:(NSDictionary *)beaconLocation
-{
-    if (!beaconLocation[@"longitude"] || !beaconLocation[@"latitude"]) {
-        // Received beacon location do not conform to required values.
-        // In case no values have been entered for latitude or longitutide "0,0" is inferred as default value.
-        
-        // Create an housing for the normalized beacon location
-        NSMutableDictionary *normalizedBeaconLocation = [NSMutableDictionary dictionary];
-        
-        // Normalize longitude if needed
-        if (!beaconLocation[@"longitude"]) {
-            NSLog(@"A beacon location with longitude 0,0 is inferred");
-            [normalizedBeaconLocation setObject:@(0.0) forKey:@"longitude"];
-        }
-        
-        // Normalize latitude if needed
-        if (!beaconLocation[@"latitude"]) {
-            NSLog(@"A beacon location with longitude 0,0 is inferred");
-            [normalizedBeaconLocation setObject:@(0.0) forKey:@"latitude"];
-        }
-        
-        return [normalizedBeaconLocation copy];
-    }
-    
-    return beaconLocation;
 }
 
 @end
