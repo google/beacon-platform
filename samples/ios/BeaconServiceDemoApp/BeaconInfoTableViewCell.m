@@ -16,6 +16,9 @@
 
 #import "BeaconInfoTableViewCell.h"
 
+// Default location coordinate 2D in case of missing values requirements.
+CLLocationCoordinate2D const kDefaultLocationCoordinate2D = (CLLocationCoordinate2D){37.42242 , -122.08430};
+
 @interface BeaconInfoTableViewCell () {
   GMSMapView *_mapView;
   CGRect _mapViewFrame;
@@ -102,7 +105,7 @@
     _beaconLatLngLabel.attributedText = text;
   
     // Just set the location to somewhere known instead of (0,0) which is in the Atlantic somewhere.
-    [self setMapViewToLatitude:37.42242 longitude:-122.08430];
+    [self setMapViewToLatitude:kDefaultLocationCoordinate2D.latitude longitude:kDefaultLocationCoordinate2D.longitude];
   }
 }
 
