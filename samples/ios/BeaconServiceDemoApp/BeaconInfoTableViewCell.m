@@ -95,15 +95,15 @@
     double lon = [(NSNumber *)beaconLocation[@"latLng"][@"longitude"] doubleValue];
     [self setMapViewToLatitude:lat longitude:lon];
   }
-else {
-  NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
-  [text appendAttributedString:[self makeTextMediumBold:@"Location: "]];
-  [text appendAttributedString:[[NSAttributedString alloc] initWithString:@"(not specified)"]];
-  _beaconLatLngLabel.attributedText = text;
+  else {
+    NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
+    [text appendAttributedString:[self makeTextMediumBold:@"Location: "]];
+    [text appendAttributedString:[[NSAttributedString alloc] initWithString:@"(not specified)"]];
+    _beaconLatLngLabel.attributedText = text;
   
-  // Just set the location to somewhere known instead of (0,0) which is in the Atlantic somewhere.
-  [self setMapViewToLatitude:37.42242 longitude:-122.08430];
-}
+    // Just set the location to somewhere known instead of (0,0) which is in the Atlantic somewhere.
+    [self setMapViewToLatitude:37.42242 longitude:-122.08430];
+  }
 }
 
 - (void)setMapViewToLatitude:(double)latitude longitude:(double)longitude {
