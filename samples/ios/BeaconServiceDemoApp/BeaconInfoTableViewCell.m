@@ -16,6 +16,9 @@
 
 #import "BeaconInfoTableViewCell.h"
 
+// Default location coordinate 2D in case of missing values requirements.
+CLLocationCoordinate2D const kDefaultLocationCoordinate2D = (CLLocationCoordinate2D){37.42242 , -122.08430};
+
 @interface BeaconInfoTableViewCell () {
   GMSMapView *_mapView;
   CGRect _mapViewFrame;
@@ -83,19 +86,32 @@
           }
         }
     ];
-  } else {
+  } else if (beaconLocation[@"latLng"]){
+    
+    CLLocationCoordinate2D coordinate =
+      CLLocationCoordinate2DMake([beaconLocation[@"latLng"][@"latitude"] doubleValue],
+                                 [beaconLocation[@"latLng"][@"longitude"] doubleValue]);
+    
     NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
     [text appendAttributedString:[self makeTextMediumBold:@"Lat: "]];
     [text appendAttributedString:[[NSAttributedString alloc]
-        initWithString:[(NSNumber *)beaconLocation[@"latitude"] stringValue]]];
+                                  initWithString:[@(coordinate.latitude) stringValue]]];
     [text appendAttributedString:[self makeTextMediumBold:@" Lon: "]];
     [text appendAttributedString:[[NSAttributedString alloc]
-        initWithString:[(NSNumber *)beaconLocation[@"longitude"] stringValue]]];
+                                  initWithString:[@(coordinate.longitude) stringValue]]];
     _beaconLatLngLabel.attributedText = text;
 
-    double lat = [(NSNumber *)beaconLocation[@"latitude"] doubleValue];
-    double lon = [(NSNumber *)beaconLocation[@"longitude"] doubleValue];
-    [self setMapViewToLatitude:lat longitude:lon];
+    [self setMapViewToLatitude:coordinate.latitude longitude:coordinate.longitude];
+  }
+  else {
+    NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
+    [text appendAttributedString:[self makeTextMediumBold:@"Location: "]];
+    [text appendAttributedString:[[NSAttributedString alloc] initWithString:@"(not specified)"]];
+    _beaconLatLngLabel.attributedText = text;
+  
+    // Just set the location to somewhere known instead of (0,0) which is in the Atlantic somewhere.
+    [self setMapViewToLatitude:kDefaultLocationCoordinate2D.latitude
+                     longitude:kDefaultLocationCoordinate2D.longitude];
   }
 }
 
