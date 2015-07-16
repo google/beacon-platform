@@ -88,13 +88,17 @@ CLLocationCoordinate2D const kDefaultLocationCoordinate2D = (CLLocationCoordinat
     ];
   } else if (beaconLocation[@"latLng"]){
     
-    CLLocationCoordinate2D coordinate = CLLocationCoordinate2DMake([beaconLocation[@"latLng"][@"latitude"] doubleValue], [beaconLocation[@"latLng"][@"longitude"] doubleValue]);
+    CLLocationCoordinate2D coordinate =
+      CLLocationCoordinate2DMake([beaconLocation[@"latLng"][@"latitude"] doubleValue],
+                                 [beaconLocation[@"latLng"][@"longitude"] doubleValue]);
     
     NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@""];
     [text appendAttributedString:[self makeTextMediumBold:@"Lat: "]];
-    [text appendAttributedString:[[NSAttributedString alloc] initWithString:[@(coordinate.latitude) stringValue]]];
+    [text appendAttributedString:[[NSAttributedString alloc]
+                                  initWithString:[@(coordinate.latitude) stringValue]]];
     [text appendAttributedString:[self makeTextMediumBold:@" Lon: "]];
-    [text appendAttributedString:[[NSAttributedString alloc] initWithString:[@(coordinate.longitude) stringValue]]];
+    [text appendAttributedString:[[NSAttributedString alloc]
+                                  initWithString:[@(coordinate.longitude) stringValue]]];
     _beaconLatLngLabel.attributedText = text;
 
     [self setMapViewToLatitude:coordinate.latitude longitude:coordinate.longitude];
@@ -106,7 +110,8 @@ CLLocationCoordinate2D const kDefaultLocationCoordinate2D = (CLLocationCoordinat
     _beaconLatLngLabel.attributedText = text;
   
     // Just set the location to somewhere known instead of (0,0) which is in the Atlantic somewhere.
-    [self setMapViewToLatitude:kDefaultLocationCoordinate2D.latitude longitude:kDefaultLocationCoordinate2D.longitude];
+    [self setMapViewToLatitude:kDefaultLocationCoordinate2D.latitude
+                     longitude:kDefaultLocationCoordinate2D.longitude];
   }
 }
 
