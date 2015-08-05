@@ -46,6 +46,9 @@
   _marker.map = _mapView;
 }
 
+- (UIStatusBarStyle) preferredStatusBarStyle {
+  return UIStatusBarStyleLightContent;
+}
 
 - (IBAction)saveButtonPressed:(id)sender {
   if ([_delegate respondsToSelector:@selector(latLngEntry:didEnterLatitude:longitude:)]) {

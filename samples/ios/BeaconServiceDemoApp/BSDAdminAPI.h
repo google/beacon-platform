@@ -121,4 +121,10 @@ extern NSString *const kRequestErrorRegisterPermissionDenied;
                       completionHandler:(void (^)(int num_deleted,
                                                   NSDictionary *errorInfo))completionHandler;
 
++ (void)listBeaconsWithCriteria:(NSString *)criteria
+                      pageToken:(NSString *)pageToken
+                       pageSize:(NSUInteger)pageSize
+              completionHandler:
+    (void (^)(NSArray *, NSString *, int, NSDictionary *))completionHandler;
+
 @end

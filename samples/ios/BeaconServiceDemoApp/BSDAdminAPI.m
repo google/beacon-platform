@@ -40,6 +40,15 @@ NSString *const kRequestErrorUnknownRegistrationError =
 NSString *const kRequestErrorRegisterPermissionDenied = @"you_cannot_register_this_beacon";
 NSString *const kRequestErrorModifyAttachmentNotYours = @"not_your_beacon_or_namespace";
 
+NSString* URLEncodeString(NSString *string) {
+  return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(
+      NULL,
+      (CFStringRef) string,
+      NULL,
+      (CFStringRef) @"!*'();:@&=+$,/?%#[]",
+      kCFStringEncodingUTF8));
+}
+
 @implementation BSDAdminAPI
 
 + (void)informationForSpecifiedBeaconIDs:(NSArray *)beaconIDs
@@ -478,6 +487,51 @@ NSString *const kRequestErrorModifyAttachmentNotYours = @"not_your_beacon_or_nam
         }
 
         completionHandler(results[@"namespaces"], error);
+      }
+  ];
+}
+
++ (void)listBeaconsWithCriteria:(NSString *)criteria
+                      pageToken:(NSString *)pageToken
+                       pageSize:(NSUInteger)pageSize
+              completionHandler:
+      (void (^)(NSArray *, NSString *, int, NSDictionary *))completionHandler {
+  NSString *bearer = [BSDAdminAPI oauthBearerToken];
+  NSString *bearerHeader = [@"Bearer " stringByAppendingString:bearer];
+
+  criteria = [criteria stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+  NSString *server = [BSDAdminAPI serverURLForQueryPath:
+      [NSString stringWithFormat:@"/beacons?pageSize=%d&q=", (int)pageSize]];
+  server = [server stringByAppendingString:URLEncodeString(criteria)];
+  if ([pageToken length]) {
+    server = [server stringByAppendingString:
+        [NSString stringWithFormat:@"&pageToken=%@", URLEncodeString(pageToken)]];
+  }
+
+  NSURL *url = [NSURL URLWithString:server];
+
+  [BSDRESTRequest RESTfulJSONRequestToURL:url
+                                   method:@"GET"
+                                 postBody:nil
+                           requestHeaders:@{ @"Authorization" : bearerHeader }
+                        completionHandler:
+      ^(NSInteger httpResponseCode, NSString *response, NSError *requestError) {
+        NSDictionary *results, *error = nil;
+        if (httpResponseCode == 200) {
+          results = [NSJSONSerialization JSONObjectWithData:
+                     [response dataUsingEncoding:NSUTF8StringEncoding]
+                                                    options:kNilOptions
+                                                      error:NULL];
+        } else {
+          error = [BSDAdminAPI errorWithResponseBody:response
+                                       defaultStatus:kRequestErrorNotRegistered];
+        }
+
+        completionHandler(results[@"beacons"],
+                          results[@"nextPageToken"],
+                          [results[@"totalCount"] intValue],
+                          error);
       }
   ];
 }
