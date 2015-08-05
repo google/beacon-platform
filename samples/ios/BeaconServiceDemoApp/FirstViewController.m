@@ -84,6 +84,7 @@ static const NSTimeInterval kScanForThisLong = 5.0;
 - (void)viewDidLoad {
   [super viewDidLoad];
 
+  // This manages filling in all of the data in our tableview.
   _tableViewHelper = [[BeaconTableViewHelper alloc] initWithTableView:_beaconListTableView
                                                        viewController:self
                                              moreButtonCellIdentifier:nil];
@@ -96,6 +97,7 @@ static const NSTimeInterval kScanForThisLong = 5.0;
   [self.view addSubview:_unsignedInView];
   [self.view bringSubviewToFront:_unsignedInView];
   _unsignedInView.hidden = NO;
+  [self setTabBarControllerItemsEnabled:NO];
 
   CGSize viewf = _unsignedInView.frame.size;
 
@@ -130,10 +132,6 @@ static const NSTimeInterval kScanForThisLong = 5.0;
                                              object:nil];
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-  [super viewWillAppear:animated];
-}
-
 - (void)viewDidAppear:(BOOL)animated {
   [super viewDidAppear:animated];
 
@@ -154,6 +152,7 @@ static const NSTimeInterval kScanForThisLong = 5.0;
   // If we're not logged in yet, throb if we're determining the status, otherwise show the Google
   // sign in button.
   if (appDelegate.signInStatus != kBSDLoginStatusLoggedIn) {
+    [self setTabBarControllerItemsEnabled:NO];
 
     if (appDelegate.signInStatus == kBSDLoginStatusDetermining) {
       _signInButton.hidden = YES;
@@ -178,8 +177,19 @@ static const NSTimeInterval kScanForThisLong = 5.0;
         _unsignedInView.alpha = 0;
       } completion: ^(BOOL finished) {
         _unsignedInView.hidden = finished;
+        [self setTabBarControllerItemsEnabled:YES];
       }];
     }
+  }
+}
+
+
+/**
+ * This looks nicer than just setting userInteractionEnabled on the tabBar.
+ */
+- (void)setTabBarControllerItemsEnabled:(BOOL)enabled {
+  for (UITabBarItem *item in self.tabBarController.tabBar.items) {
+    item.enabled = enabled;
   }
 }
 
@@ -207,10 +217,6 @@ static const NSTimeInterval kScanForThisLong = 5.0;
                                  selector:@selector(stopScanningNow:)
                                  userInfo:nil
                                   repeats:NO];
-}
-
-- (IBAction)logoutPressed:(id)sender {
-  [[GIDSignIn sharedInstance] disconnect];
 }
 
 - (void)beaconScanner:(ESSBeaconScanner *)scanner didFindBeacon:(id)beaconInfo {

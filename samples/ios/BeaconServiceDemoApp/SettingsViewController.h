@@ -14,6 +14,10 @@
 
 #import <UIKit/UIKit.h>
 
+
+///
+/// This is quite primitive right now. We'll be slowly adding in new features here over time.
+///
 @interface SettingsViewController : UIViewController
 
 @end

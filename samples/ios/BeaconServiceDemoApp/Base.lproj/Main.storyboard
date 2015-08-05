@@ -37,17 +37,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="551"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NQo-P6-DRK">
-                                <rect key="frame" x="521" y="34" width="63" height="16"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="13"/>
-                                <state key="normal" title=" Logout" image="settings-2">
-                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                </state>
-                                <connections>
-                                    <action selector="logoutPressed:" destination="3Kc-oX-Efb" eventType="touchUpInside" id="W0E-a0-feP"/>
-                                </connections>
-                            </button>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="3gt-fh-S3T">
                                 <rect key="frame" x="0.0" y="66" width="600" height="485"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -76,9 +65,7 @@
                         <color key="backgroundColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstItem="rVV-7v-Zwh" firstAttribute="top" secondItem="siu-0U-vTl" secondAttribute="bottom" constant="12" id="38i-jT-C4Q"/>
-                            <constraint firstAttribute="trailingMargin" secondItem="NQo-P6-DRK" secondAttribute="trailing" id="Lai-ca-HkP"/>
                             <constraint firstItem="rVV-7v-Zwh" firstAttribute="leading" secondItem="fsZ-QM-Sw0" secondAttribute="trailing" constant="5" id="RvW-An-QYa"/>
-                            <constraint firstItem="NQo-P6-DRK" firstAttribute="top" secondItem="siu-0U-vTl" secondAttribute="bottom" constant="14" id="Vaz-cT-ZXp"/>
                             <constraint firstAttribute="centerX" secondItem="rVV-7v-Zwh" secondAttribute="centerX" constant="-0.5" id="YLE-AG-paZ"/>
                             <constraint firstItem="DO5-gP-KiF" firstAttribute="top" secondItem="siu-0U-vTl" secondAttribute="bottom" constant="14" id="ZCJ-Tx-lmK"/>
                             <constraint firstItem="rGQ-ih-sHi" firstAttribute="top" secondItem="3gt-fh-S3T" secondAttribute="bottom" id="hDd-0I-6tc"/>
@@ -237,7 +224,23 @@
                     <view key="view" contentMode="scaleToFill" id="WXx-sd-hKO">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="551"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ZZc-rj-5Yc">
+                                <rect key="frame" x="265" y="256" width="71" height="40"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="23"/>
+                                <state key="normal" title="Logout">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="logoutButtonPressed:" destination="R0a-UA-Agh" eventType="touchUpInside" id="nE4-I4-JsW"/>
+                                </connections>
+                            </button>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="centerY" secondItem="ZZc-rj-5Yc" secondAttribute="centerY" constant="-0.5" id="pmM-f5-teK"/>
+                            <constraint firstAttribute="centerX" secondItem="ZZc-rj-5Yc" secondAttribute="centerX" constant="-0.5" id="qZD-Pb-5Rp"/>
+                        </constraints>
                     </view>
                     <tabBarItem key="tabBarItem" title="Settings" image="settings" id="frE-Y1-VSi"/>
                 </viewController>
@@ -746,12 +749,11 @@
         <image name="search-2" width="16" height="16"/>
         <image name="search-big" width="32" height="32"/>
         <image name="settings" width="32" height="32"/>
-        <image name="settings-2" width="16" height="16"/>
         <image name="whiteadd" width="32" height="32"/>
         <image name="wifi-full" width="32" height="32"/>
         <image name="x" width="16" height="16"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="xjD-vn-tmz"/>
+        <segue reference="1SM-5I-q4J"/>
     </inferredMetricsTieBreakers>
 </document>
