@@ -42,10 +42,10 @@
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </tableView>
                             <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="white" translatesAutoresizingMaskIntoConstraints="NO" id="fsZ-QM-Sw0">
-                                <rect key="frame" x="193" y="32" width="20" height="20"/>
+                                <rect key="frame" x="226" y="32" width="20" height="20"/>
                             </activityIndicatorView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Click &quot;Scan&quot; to Begin" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="rVV-7v-Zwh">
-                                <rect key="frame" x="218" y="32" width="166" height="21"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="← Start Here" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="rVV-7v-Zwh">
+                                <rect key="frame" x="252" y="32" width="100" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
@@ -65,8 +65,8 @@
                         <color key="backgroundColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstItem="rVV-7v-Zwh" firstAttribute="top" secondItem="siu-0U-vTl" secondAttribute="bottom" constant="12" id="38i-jT-C4Q"/>
-                            <constraint firstItem="rVV-7v-Zwh" firstAttribute="leading" secondItem="fsZ-QM-Sw0" secondAttribute="trailing" constant="5" id="RvW-An-QYa"/>
-                            <constraint firstAttribute="centerX" secondItem="rVV-7v-Zwh" secondAttribute="centerX" constant="-0.5" id="YLE-AG-paZ"/>
+                            <constraint firstItem="rVV-7v-Zwh" firstAttribute="leading" secondItem="fsZ-QM-Sw0" secondAttribute="trailing" constant="6" id="RvW-An-QYa"/>
+                            <constraint firstAttribute="centerX" secondItem="rVV-7v-Zwh" secondAttribute="centerX" constant="-1.5" id="YLE-AG-paZ"/>
                             <constraint firstItem="DO5-gP-KiF" firstAttribute="top" secondItem="siu-0U-vTl" secondAttribute="bottom" constant="14" id="ZCJ-Tx-lmK"/>
                             <constraint firstItem="rGQ-ih-sHi" firstAttribute="top" secondItem="3gt-fh-S3T" secondAttribute="bottom" id="hDd-0I-6tc"/>
                             <constraint firstItem="DO5-gP-KiF" firstAttribute="leading" secondItem="Mye-bV-Nfd" secondAttribute="leadingMargin" id="iwL-yb-Y0n"/>
