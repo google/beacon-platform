@@ -239,7 +239,12 @@ public class ManageBeaconFragment extends Fragment {
         try {
           // At present there can be only one namespace.
           JSONArray namespaces = response.getJSONArray("namespaces");
-          namespace = namespaces.getJSONObject(0).getString("namespaceName");
+          String tmp = namespaces.getJSONObject(0).getString("namespaceName");
+          if (tmp.startsWith("namespaces/")) {
+            namespace = tmp.substring("namespaces/".length());
+          } else {
+            namespace = tmp;
+          }
           redraw();
         }
         catch (JSONException e) {
