@@ -81,10 +81,11 @@ NSString *GetNamespacedType(NSString *namespacedType) {
   }
 
   [BSDAdminAPI listAvailableNamespaces:^(NSArray *namespaces, NSDictionary *errorInfo) {
-    if (namespaces) {
-      if (namespaces[0][@"namespaceName"]) {
-        _registeredNamespace = namespaces[0][@"namespaceName"];
-      }
+    if (namespaces[0][@"namespaceName"]
+        && [namespaces[0][@"namespaceName"] rangeOfString:@"namespaces/"].location != NSNotFound) {
+      // Strip off the resource name ("namespaces/" in this case) part of this string.
+      _registeredNamespace =
+          [namespaces[0][@"namespaceName"] substringFromIndex:[@"namespaces/" length]];
     }
   }];
 
