@@ -181,7 +181,16 @@
                             </tableView>
                             <view hidden="YES" alpha="0.69999999999999996" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Tw6-Mb-bQT">
                                 <rect key="frame" x="0.0" y="106" width="600" height="445"/>
+                                <subviews>
+                                    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="Qo3-bu-8ud">
+                                        <rect key="frame" x="282" y="204" width="37" height="37"/>
+                                    </activityIndicatorView>
+                                </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="centerY" secondItem="Qo3-bu-8ud" secondAttribute="centerY" id="4I8-wL-CI5"/>
+                                    <constraint firstAttribute="centerX" secondItem="Qo3-bu-8ud" secondAttribute="centerX" constant="-0.5" id="gfa-ty-gnl"/>
+                                </constraints>
                             </view>
                         </subviews>
                         <color key="backgroundColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>

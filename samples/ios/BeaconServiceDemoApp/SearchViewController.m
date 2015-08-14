@@ -107,7 +107,7 @@ NSString *EscapeQuotes(NSString *escape_me) {
   CGRect r = self.view.frame;
   CGRect holderFrame = CGRectMake(0, r.size.height, r.size.width, 230);
   _pickerViewHolder.frame = holderFrame;
-  _criterionPicker.frame = CGRectMake(0, 30, r.size.width, 200);
+  _criterionPicker.frame = CGRectMake(0, 30, r.size.width, 180);
   _doneButton.frame = CGRectMake(r.size.width - 68, 8, 60, 30);
 
   _addCriteriaButton.enabled = YES;
@@ -118,7 +118,7 @@ NSString *EscapeQuotes(NSString *escape_me) {
   return UIStatusBarStyleLightContent;
 }
 
-/// TODO(marcwan): This isn't the cleanest of designs. Is there a better way?
+/// TODO: This isn't the cleanest of designs. Is there a better way?
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
   [_tableViewHelper prepareForSegue:segue sender:sender];
 }
@@ -139,57 +139,70 @@ NSString *EscapeQuotes(NSString *escape_me) {
                              pageToken:_pageToken
                               pageSize:kBeaconsPerSearchPage
                      completionHandler:
-   ^(NSArray *beacons, NSString *nextPageToken, int totalCount, NSDictionary *error) {
-     if ([beacons count]) {
-       // Extract the beaconids for the array of scanned beacons.
-       NSMutableArray *bids = [NSMutableArray arrayWithArray:[_tableViewHelper scannedBeaconList]];
-       NSMutableDictionary *beaconRegistrationData =
-           [NSMutableDictionary dictionaryWithDictionary:[_tableViewHelper beaconRegistrationData]];
+      ^(NSArray *beacons, NSString *nextPageToken, int totalCount, NSDictionary *error) {
+        if ([beacons count]) {
+          // Extract the beaconids for the array of scanned beacons.
+          NSMutableArray *bids =
+              [NSMutableArray arrayWithArray:[_tableViewHelper scannedBeaconList]];
+          NSMutableDictionary *beaconRegistrationData = [NSMutableDictionary
+              dictionaryWithDictionary:[_tableViewHelper beaconRegistrationData]];
 
-       for (NSDictionary *beaconInfo in beacons) {
-         NSString *bid = [self extractBeaconID:beaconInfo[@"beaconName"]];
-         if (bid) {
-           NSString *printable = PrintableBeaconIDFromHexString(bid);
-           [bids addObject:printable];
-           beaconRegistrationData[printable] = beaconInfo;
-         }
-       }
+          for (NSDictionary *beaconInfo in beacons) {
+            NSString *bid = [self extractBeaconID:beaconInfo[@"beaconName"]];
+            if (bid) {
+              NSString *printable = PrintableBeaconIDFromHexString(bid);
+              [bids addObject:printable];
+              beaconRegistrationData[printable] = beaconInfo;
+            }
+          }
 
-       if (nextPageToken) {
-         _pageTokenQuery = _searchTextView.text;
-         _pageToken = nextPageToken;
-       }
+          if (nextPageToken) {
+            _pageTokenQuery = _searchTextView.text;
+            _pageToken = nextPageToken;
+          }
 
-       // Now update our helper.
-       dispatch_async(dispatch_get_main_queue(), ^{
-         [_tableViewHelper setScannedBeaconList:bids];
-         [_tableViewHelper setBeaconRegistrationData:beaconRegistrationData];
-         if (nextPageToken) {
-           [_tableViewHelper setShouldShowMoreButton:YES];
-         }
-       });
-     }
+          // Now update our helper.
+          dispatch_async(dispatch_get_main_queue(), ^{
+            [_tableViewHelper setScannedBeaconList:bids];
+            [_tableViewHelper setBeaconRegistrationData:beaconRegistrationData];
+            if (nextPageToken) {
+              [_tableViewHelper setShouldShowMoreButton:YES];
+            }
+          });
+        }
 
-     if ([beacons count] < kBeaconsPerSearchPage) {
-       dispatch_async(dispatch_get_main_queue(), ^{
-         [_tableViewHelper setShouldShowMoreButton:NO];
-       });
-     }
-   }
-   ];
-
+        if ([beacons count] < kBeaconsPerSearchPage) {
+          dispatch_async(dispatch_get_main_queue(), ^{
+            [_tableViewHelper setShouldShowMoreButton:NO];
+          });
+        }
+      }
+  ];
 }
 
 - (IBAction)searchNowButtonPressed:(id)sender {
+  // First clear out and update some UI.
+  _searchNowButton.enabled = NO;
+  _addCriteriaButton.enabled = NO;
+  _hidingView.hidden = NO;
+
   [_tableViewHelper setScannedBeaconList:nil];
   [_tableViewHelper setBeaconRegistrationData:nil];
   [_tableViewHelper setShouldShowMoreButton:NO];
 
+  // Start searching.
   [BSDAdminAPI listBeaconsWithCriteria:_searchTextView.text
                              pageToken:nil
                               pageSize:kBeaconsPerSearchPage
                      completionHandler:
       ^(NSArray *beacons, NSString *nextPageToken, int totalCount, NSDictionary *error) {
+        // Restore the UI.
+        dispatch_async(dispatch_get_main_queue(), ^{
+          _hidingView.hidden = YES;
+          _searchNowButton.enabled = YES;
+          _addCriteriaButton.enabled = YES;
+        });
+
         if ([beacons count]) {
           // Extract the beaconids for the array of scanned beacons.
           NSMutableArray *beaconids = [NSMutableArray array];
@@ -228,7 +241,6 @@ NSString *EscapeQuotes(NSString *escape_me) {
 }
 
 - (IBAction)doneButtonPressed:(id)sender {
-
   [UIView animateWithDuration:0.3f
                    animations:
       ^{
@@ -277,13 +289,11 @@ NSString *EscapeQuotes(NSString *escape_me) {
   }
 }
 
-
-
 - (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView {
   return 1;
 }
 
-- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent: (NSInteger)component {
+- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component {
   return 8;
 }
 
@@ -491,7 +501,7 @@ NSString *EscapeQuotes(NSString *escape_me) {
                             label2:@"longitude"
                             label3:@"radius"
                        description:
-      @"Latitude and longitude for the beacon, with a radius specified in metres."
+      @"Latitude and longitude for the beacon, with a radius specified in metres. "
       @"All fields mandatory!"
                           callback:
       ^(NSArray *values) {
