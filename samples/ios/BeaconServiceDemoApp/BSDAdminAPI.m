@@ -478,7 +478,7 @@ NSString* URLEncodeString(NSString *string) {
         NSDictionary *results, *error = nil;
         if (httpResponseCode == 200) {
           results = [NSJSONSerialization JSONObjectWithData:
-                     [response dataUsingEncoding:NSUTF8StringEncoding]
+              [response dataUsingEncoding:NSUTF8StringEncoding]
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
@@ -520,7 +520,7 @@ NSString* URLEncodeString(NSString *string) {
         NSDictionary *results, *error = nil;
         if (httpResponseCode == 200) {
           results = [NSJSONSerialization JSONObjectWithData:
-                     [response dataUsingEncoding:NSUTF8StringEncoding]
+              [response dataUsingEncoding:NSUTF8StringEncoding]
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
