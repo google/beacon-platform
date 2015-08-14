@@ -227,16 +227,6 @@ static const NSTimeInterval kScanForThisLong = 5.0;
   [_scanner stopScanning];
 
 #ifdef SHOW_SOME_FAKE_BEACONIDS_FOR_TESTING
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"39fe899d70da4bb6966d36ab513ee12c"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"281ef01399614dfbab617395bb0d111b"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"0edb97fe36a44f90863ad35bc2fde262"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"f5239377a6eb4767b8892fbd0388bfc6"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"d7398ce574b24fc3bb9ff9eaa5e89da1"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"766f65043b044cccbd6f8d62de10db29"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"cf0a44777dd04a428c918484ea70fd49"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"394bbdd8d15a44cb8d910697460b4ee4"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"f2c42e94ee984e85bb0aaf222b01348b"]];
-  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"b77f90dc50814d24884bc9fe4e21b9ae"]];
 
   // This will show up with a lock -- it's registered by somebody else so you can't touch it
   [_foundBeacons addObject:[ESSBeaconInfo
