@@ -44,6 +44,24 @@ static inline BOOL IsEqualOrBothNil(id a, id b) {
   return ((a == b) || (a && b && [a isEqual:b]));
 }
 
+NSString *PrintableBeaconIDFromData(NSData *beaconID) {
+  NSString *stringBID = [NSString stringWithFormat:@"%@", beaconID];
+  return [stringBID substringWithRange:NSMakeRange(1, [stringBID length] - 2)];
+}
+
+NSString *PrintableBeaconIDFromHexString(NSString *beaconID) {
+  if ([beaconID length] != 32) {
+    NSLog(@"That's not a valid Eddystone beaconID: %@", beaconID);
+    return beaconID;
+  }
+
+  return [NSString stringWithFormat:@"%@ %@ %@ %@",
+      [beaconID substringWithRange:NSMakeRange(0, 8)],
+      [beaconID substringWithRange:NSMakeRange(8, 8)],
+      [beaconID substringWithRange:NSMakeRange(16, 8)],
+      [beaconID substringWithRange:NSMakeRange(24, 8)]];
+}
+
 /**
  *=-----------------------------------------------------------------------------------------------=
  * ESSBeaconID

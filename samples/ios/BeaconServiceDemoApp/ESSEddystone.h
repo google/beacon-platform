@@ -25,6 +25,9 @@ typedef NS_ENUM(NSUInteger, ESSFrameType) {
   kESSEddystoneTelemetryFrameType,
 };
 
+NSString *PrintableBeaconIDFromData(NSData *);
+NSString *PrintableBeaconIDFromHexString(NSString *);
+
 /**
  *=-----------------------------------------------------------------------------------------------=
  * ESSBeaconID

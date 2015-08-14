@@ -15,6 +15,7 @@
 #import "FirstViewController.h"
 
 #import "AppDelegate.h"
+#import "BeaconTableViewHelper.h"
 #import "ESSEddystone.h"
 #import "ESSBeaconScanner.h"
 #import "RegisterBeaconViewController.h"
@@ -48,23 +49,19 @@ static const NSTimeInterval kScanForThisLong = 1.0;
 static const NSTimeInterval kScanForThisLong = 5.0;
 #endif // TARGET_IPHONE_SIMULATOR
 
-static NSString *const kCellIdentifier = @"table_view_cell";
-static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue";
-
 /**
  *=-----------------------------------------------------------------------------------------------=
  * Private Additions to FirstViewController
  *=-----------------------------------------------------------------------------------------------=
  */
-@interface FirstViewController () <ESSBeaconScannerDelegate, RegisterBeaconViewControllerDelegate> {
+@interface FirstViewController () <ESSBeaconScannerDelegate> {
   GIDSignInButton *_signInButton;
   UIActivityIndicatorView *_signInStatusIndicator;
-  NSArray *_recentlyScannedBeacons;
   NSMutableArray *_foundBeacons;
 
   ESSBeaconScanner *_scanner;
 
-  NSDictionary *_beaconRegistrationData;
+  BeaconTableViewHelper *_tableViewHelper;
 }
 
 @property (strong, nonatomic) IBOutlet UIView *unsignedInView;
@@ -87,6 +84,11 @@ static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue"
 - (void)viewDidLoad {
   [super viewDidLoad];
 
+  // This manages filling in all of the data in our tableview.
+  _tableViewHelper = [[BeaconTableViewHelper alloc] initWithTableView:_beaconListTableView
+                                                       viewController:self
+                                             moreButtonCellIdentifier:nil];
+
   _scanningThrobber.hidden = YES;
 
   _unsignedInView = [[UIView alloc] init];
@@ -95,6 +97,7 @@ static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue"
   [self.view addSubview:_unsignedInView];
   [self.view bringSubviewToFront:_unsignedInView];
   _unsignedInView.hidden = NO;
+  [self setTabBarControllerItemsEnabled:NO];
 
   CGSize viewf = _unsignedInView.frame.size;
 
@@ -129,14 +132,14 @@ static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue"
                                              object:nil];
 }
 
-- (void)viewWillAppear:(BOOL)animated {
-  [super viewWillAppear:animated];
-}
-
 - (void)viewDidAppear:(BOOL)animated {
   [super viewDidAppear:animated];
 
   [GIDSignIn sharedInstance].uiDelegate = self;
+}
+
+- (UIStatusBarStyle) preferredStatusBarStyle {
+  return UIStatusBarStyleLightContent;
 }
 
 - (void)loginStatusChangedNotification:(NSNotification *)notification {
@@ -149,7 +152,7 @@ static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue"
   // If we're not logged in yet, throb if we're determining the status, otherwise show the Google
   // sign in button.
   if (appDelegate.signInStatus != kBSDLoginStatusLoggedIn) {
-    _recentlyScannedBeacons = nil;
+    [self setTabBarControllerItemsEnabled:NO];
 
     if (appDelegate.signInStatus == kBSDLoginStatusDetermining) {
       _signInButton.hidden = YES;
@@ -174,17 +177,28 @@ static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue"
         _unsignedInView.alpha = 0;
       } completion: ^(BOOL finished) {
         _unsignedInView.hidden = finished;
+        [self setTabBarControllerItemsEnabled:YES];
       }];
     }
+  }
+}
+
+
+/**
+ * This looks nicer than just setting userInteractionEnabled on the tabBar.
+ */
+- (void)setTabBarControllerItemsEnabled:(BOOL)enabled {
+  for (UITabBarItem *item in self.tabBarController.tabBar.items) {
+    item.enabled = enabled;
   }
 }
 
 - (IBAction)scanForBeaconsPressed:(id)sender {
 
   _pageTitle.text = @"Scanning …";
-  _beaconRegistrationData = nil;
   _foundBeacons = [NSMutableArray array];
-  _recentlyScannedBeacons = nil;
+  [_tableViewHelper setScannedBeaconList:nil];
+  [_tableViewHelper setBeaconRegistrationData:nil];
 
   // Clear the tableview while we're scanning.
   [_beaconListTableView reloadData];
@@ -205,10 +219,6 @@ static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue"
                                   repeats:NO];
 }
 
-- (IBAction)logoutPressed:(id)sender {
-  [[GIDSignIn sharedInstance] disconnect];
-}
-
 - (void)beaconScanner:(ESSBeaconScanner *)scanner didFindBeacon:(id)beaconInfo {
   [_foundBeacons addObject:beaconInfo];
 }
@@ -217,172 +227,66 @@ static NSString *const kShowRegisterBeaconSegueName = @"ShowRegisterBeaconSegue"
   [_scanner stopScanning];
 
 #ifdef SHOW_SOME_FAKE_BEACONIDS_FOR_TESTING
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"39fe899d70da4bb6966d36ab513ee12c"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"281ef01399614dfbab617395bb0d111b"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"0edb97fe36a44f90863ad35bc2fde262"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"f5239377a6eb4767b8892fbd0388bfc6"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"d7398ce574b24fc3bb9ff9eaa5e89da1"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"766f65043b044cccbd6f8d62de10db29"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"cf0a44777dd04a428c918484ea70fd49"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"394bbdd8d15a44cb8d910697460b4ee4"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"f2c42e94ee984e85bb0aaf222b01348b"]];
+  [_foundBeacons addObject:[ESSBeaconInfo testBeaconFromBeaconIDString:@"b77f90dc50814d24884bc9fe4e21b9ae"]];
 
   // This will show up with a lock -- it's registered by somebody else so you can't touch it
   [_foundBeacons addObject:[ESSBeaconInfo
       testBeaconFromBeaconIDString:@"6e131d091c10a9a04f2c34b9ab1cb791"]];
 
-
-
 #endif // SHOW_SOME_FAKE_BEACONIDS_FOR_TESTING
-
-  _recentlyScannedBeacons = _foundBeacons;
-  _foundBeacons = nil;
-
-  [_beaconListTableView reloadData];
 
   _pageTitle.text = @"Loading Data";
 
-  NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[_recentlyScannedBeacons count]];
-  for (ESSBeaconInfo *info in _recentlyScannedBeacons) {
-    NSString *bid = [NSString stringWithFormat:@"%@", info.beaconID.beaconID];
-
-    bid = [bid substringWithRange:NSMakeRange(1, [bid length] - 2)];
-    [ids addObject:bid];
+  NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[_foundBeacons count]];
+  for (ESSBeaconInfo *info in _foundBeacons) {
+    [ids addObject:PrintableBeaconIDFromData(info.beaconID.beaconID)];
   }
+
+  [_tableViewHelper setScannedBeaconList:ids];
 
   [BSDAdminAPI informationForSpecifiedBeaconIDs:ids completionHandler:
       ^(NSDictionary *results, NSDictionary *errorInfo) {
-        _beaconRegistrationData = results;
+
+        NSLog(@"%@", results);
 
         // Reloading the tableview from within this block seems to be a terrible idea as it seems
         // to keep a lot of references on a whole lot of things that take a while to unroll. So,
         // instead, we'll just post a message to the main thread telling it to finish processing
         // once we've unrolled the stack, etc.
         dispatch_async(dispatch_get_main_queue(), ^{
-          [self finishBeaconIDLoad];
+          [self finishBeaconIDLoad: results];
         });
       }
   ];
+
+  _foundBeacons = nil;
 }
 
-- (void)finishBeaconIDLoad {
+- (void)finishBeaconIDLoad:(NSDictionary *)beaconRegistrationData {
   [_scanningThrobber stopAnimating];
   _scanningThrobber.hidden = YES;
   _scanForBeaconsButton.enabled = YES;
   _pageTitle.text = @"Discovered Beacons";
-  [_beaconListTableView reloadData];
-
+  [_tableViewHelper setBeaconRegistrationData:beaconRegistrationData];
 }
 
-#pragma mark - Table view data source
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-  return 1;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-  return 0;
-}
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-  return [_recentlyScannedBeacons count];
-}
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-  [self performSegueWithIdentifier:kShowRegisterBeaconSegueName sender:self];
-  [_beaconListTableView deselectRowAtIndexPath:indexPath animated:NO];
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView
-         cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-  UITableViewCell *cell;
-  cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-                                reuseIdentifier:kCellIdentifier];
-  cell.textLabel.font = [UIFont fontWithName:@"Menlo-Regular" size:13.0];
-
-  NSString *bid = [NSString stringWithFormat:@"%@",
-                   ((ESSBeaconInfo *)_recentlyScannedBeacons[indexPath.row]).beaconID.beaconID];
-
-  // Trim out the < > chars
-  bid = [bid substringWithRange:NSMakeRange(1, [bid length] - 2)];
-  cell.textLabel.text = bid;
-  cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-
-  BOOL disable = YES;
-  if (_beaconRegistrationData[bid]) {
-    id requestError = _beaconRegistrationData[bid][kRequestErrorStatus];
-
-    // If it's ours and registered, or not registered at all, then we'll enable the row so
-    // people can view / edit the beacon information. Otherwise, we can't do much with it and
-    // will disable the cell.
-    if (requestError && [requestError isEqualToString:@"NOT_FOUND"]) {
-      cell.imageView.image = [UIImage imageNamed:@"add"];
-      disable = NO;
-    } else if (requestError && [requestError isEqualToString:@"PERMISSION_DENIED"]) {
-      cell.imageView.image = [UIImage imageNamed:@"locked"];
-    } else if (!requestError
-               && [_beaconRegistrationData[bid][@"status"]
-                      isEqualToString:kEddystoneStatusDecommissioned]) {
-      cell.imageView.image = [UIImage imageNamed:@"cross"];
-    } else if (!requestError) {
-      cell.imageView.image = [UIImage imageNamed:@"tick"];
-      disable = NO;
-    }
-  }
-
-  if (disable) {
-    cell.userInteractionEnabled = NO;
-    cell.textLabel.enabled = NO;
-    cell.detailTextLabel.enabled = NO;
-  }
-
-  return cell;
-}
-
-- (void)beaconRegistrator:(RegisterBeaconViewController *)registrator
-      didUpdateBeaconInfo:(NSDictionary *)beaconInfo
-              forBeaconID:(NSString *)beaconID {
-
-  NSMutableDictionary *updated =
-      [NSMutableDictionary dictionaryWithDictionary:_beaconRegistrationData];
-
-  for (NSString *key in _beaconRegistrationData) {
-    NSString *processedKey = [key stringByReplacingOccurrencesOfString:@" " withString:@""];
-    NSString *incomingBeaconID = [self extractBeaconID:beaconInfo[@"beaconName"]];
-    if ([processedKey isEqualToString:incomingBeaconID]) {
-      [updated setObject:beaconInfo forKey:key];
-      break;
-    }
-  }
-
-  // Reload the tableview in case the status values changed and we need a new icon now.
-  dispatch_async(dispatch_get_main_queue(), ^() {
-  _beaconRegistrationData = updated;
-  [_beaconListTableView reloadData];
-  });
-}
-
-/**
- * Tell the incoming view controller the beaconID of the selected row if we're doing a
- * show register beacon segue.
- */
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-  if ([segue.identifier isEqualToString:kShowRegisterBeaconSegueName]) {
-    NSIndexPath *indexPath = [_beaconListTableView indexPathForSelectedRow];
-    NSString *beaconID = [_beaconListTableView cellForRowAtIndexPath:indexPath].textLabel.text;
-    RegisterBeaconViewController *vc = segue.destinationViewController;
-    vc.beaconID = beaconID;
-    vc.delegate = self;
-
-    // If we have some registration data for this beacon, pass it to the new VC.
-    if (!_beaconRegistrationData[beaconID][kRequestErrorStatus]) {
-      vc.beaconData = _beaconRegistrationData[beaconID];
-    }
-  }
-}
 
 - (IBAction)unwindToContainerVC:(UIStoryboardSegue *)segue {
   // Don't actually need to do anything here.
 }
 
-- (NSString *)extractBeaconID:(NSString *)beaconName {
-  NSArray *parts = [beaconName componentsSeparatedByString:@"!"];
-  if ([parts count] == 2) {
-    return parts[1];
-  } else {
-    return nil;
-  }
+/// TODO(marcwan): This isn't the cleanest of designs. Is there a better way?
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+  [_tableViewHelper prepareForSegue:segue sender:sender];
 }
 
 @end

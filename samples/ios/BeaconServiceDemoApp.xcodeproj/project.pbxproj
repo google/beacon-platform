@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		01940D28698EF6D814450881 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0B2AD369E5C0A9D9EA7454C9 /* libPods.a */; };
+		6B2B465D1B6FC03A00D30EB6 /* SearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B2B465C1B6FC03A00D30EB6 /* SearchViewController.m */; };
 		6B35C3E11B305B0D0020F8B4 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B35C3E01B305B0D0020F8B4 /* CoreLocation.framework */; };
 		6B3EA1F81B42AD0A0035B1D0 /* APIKey.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6B3EA1F71B42AD0A0035B1D0 /* APIKey.plist */; };
 		6B3F78A81B1DDFE000AFF84C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B3F78A71B1DDFE000AFF84C /* main.m */; };
@@ -29,6 +30,8 @@
 		6B6CC7CC1B2B164C005CF8EA /* ListSelectionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B6CC7CB1B2B164C005CF8EA /* ListSelectionViewController.m */; };
 		6B6CC7CF1B2B2012005CF8EA /* LatLngViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B6CC7CE1B2B2012005CF8EA /* LatLngViewController.m */; };
 		6B6E80201B456055002CD0B0 /* BSDDiagnosticsAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 6B6E801F1B456055002CD0B0 /* BSDDiagnosticsAPI.m */; };
+		6BA936F51B72146000D3A067 /* BeaconTableViewHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BA936F41B72146000D3A067 /* BeaconTableViewHelper.m */; };
+		6BA936F81B72613F00D3A067 /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BA936F71B72613F00D3A067 /* SettingsViewController.m */; };
 		6BEA67D81B394E5C00B3C6C7 /* BSDAdminAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA67D71B394E5C00B3C6C7 /* BSDAdminAPI.m */; };
 		6BEA67DB1B39518300B3C6C7 /* BSDServingAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 6BEA67DA1B39518300B3C6C7 /* BSDServingAPI.m */; };
 /* End PBXBuildFile section */
@@ -47,6 +50,8 @@
 		02D1F3A836BE2F4F888FC186 /* Pods.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.debug.xcconfig; path = "Pods/Target Support Files/Pods/Pods.debug.xcconfig"; sourceTree = "<group>"; };
 		0B2AD369E5C0A9D9EA7454C9 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		38F0739240F8786C77163F2D /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
+		6B2B465B1B6FC03A00D30EB6 /* SearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchViewController.h; sourceTree = "<group>"; };
+		6B2B465C1B6FC03A00D30EB6 /* SearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SearchViewController.m; sourceTree = "<group>"; };
 		6B35C3E01B305B0D0020F8B4 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		6B3EA1F71B42AD0A0035B1D0 /* APIKey.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = APIKey.plist; sourceTree = "<group>"; };
 		6B3F78A21B1DDFE000AFF84C /* BeaconServiceDemoApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeaconServiceDemoApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -85,6 +90,10 @@
 		6B6CC7CE1B2B2012005CF8EA /* LatLngViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LatLngViewController.m; sourceTree = "<group>"; };
 		6B6E801E1B456055002CD0B0 /* BSDDiagnosticsAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BSDDiagnosticsAPI.h; sourceTree = "<group>"; };
 		6B6E801F1B456055002CD0B0 /* BSDDiagnosticsAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BSDDiagnosticsAPI.m; sourceTree = "<group>"; };
+		6BA936F31B72146000D3A067 /* BeaconTableViewHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BeaconTableViewHelper.h; sourceTree = "<group>"; };
+		6BA936F41B72146000D3A067 /* BeaconTableViewHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BeaconTableViewHelper.m; sourceTree = "<group>"; };
+		6BA936F61B72613F00D3A067 /* SettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsViewController.h; sourceTree = "<group>"; };
+		6BA936F71B72613F00D3A067 /* SettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingsViewController.m; sourceTree = "<group>"; };
 		6BEA67D61B394E5C00B3C6C7 /* BSDAdminAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BSDAdminAPI.h; sourceTree = "<group>"; };
 		6BEA67D71B394E5C00B3C6C7 /* BSDAdminAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BSDAdminAPI.m; sourceTree = "<group>"; };
 		6BEA67D91B39518300B3C6C7 /* BSDServingAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BSDServingAPI.h; sourceTree = "<group>"; };
@@ -145,6 +154,8 @@
 				6B6CC7AF1B29AAB6005CF8EA /* BeaconInfoTableViewCell.m */,
 				6B6CC7C71B2B0F26005CF8EA /* BeaconRegistrationEditorViewController.h */,
 				6B6CC7C81B2B0F26005CF8EA /* BeaconRegistrationEditorViewController.m */,
+				6BA936F31B72146000D3A067 /* BeaconTableViewHelper.h */,
+				6BA936F41B72146000D3A067 /* BeaconTableViewHelper.m */,
 				6B3F78AC1B1DDFE000AFF84C /* FirstViewController.h */,
 				6B3F78AD1B1DDFE100AFF84C /* FirstViewController.m */,
 				6B6CC7CD1B2B2012005CF8EA /* LatLngViewController.h */,
@@ -153,6 +164,10 @@
 				6B6CC7CB1B2B164C005CF8EA /* ListSelectionViewController.m */,
 				6B3F78DA1B2044CF00AFF84C /* RegisterBeaconViewController.h */,
 				6B3F78DB1B2044CF00AFF84C /* RegisterBeaconViewController.m */,
+				6B2B465B1B6FC03A00D30EB6 /* SearchViewController.h */,
+				6B2B465C1B6FC03A00D30EB6 /* SearchViewController.m */,
+				6BA936F61B72613F00D3A067 /* SettingsViewController.h */,
+				6BA936F71B72613F00D3A067 /* SettingsViewController.m */,
 				6B3F78A51B1DDFE000AFF84C /* Supporting Files */,
 			);
 			path = BeaconServiceDemoApp;
@@ -384,15 +399,18 @@
 				6B6CC7CF1B2B2012005CF8EA /* LatLngViewController.m in Sources */,
 				6B3F78E61B20894000AFF84C /* BSDRESTRequest.m in Sources */,
 				6BEA67D81B394E5C00B3C6C7 /* BSDAdminAPI.m in Sources */,
+				6B2B465D1B6FC03A00D30EB6 /* SearchViewController.m in Sources */,
 				6B3F78D61B1DFC1A00AFF84C /* ESSEddystone.m in Sources */,
 				6B6CC7B01B29AAB6005CF8EA /* BeaconInfoTableViewCell.m in Sources */,
 				6B3F78AB1B1DDFE000AFF84C /* AppDelegate.m in Sources */,
 				6B6CC7CC1B2B164C005CF8EA /* ListSelectionViewController.m in Sources */,
 				6B3F78AE1B1DDFE100AFF84C /* FirstViewController.m in Sources */,
+				6BA936F81B72613F00D3A067 /* SettingsViewController.m in Sources */,
 				6B3F78D71B1DFC1A00AFF84C /* ESSBeaconScanner.m in Sources */,
 				6B3F78A81B1DDFE000AFF84C /* main.m in Sources */,
 				6B3F78DC1B2044CF00AFF84C /* RegisterBeaconViewController.m in Sources */,
 				6B6CC7C31B29B8FA005CF8EA /* AttachmentEditorViewController.m in Sources */,
+				6BA936F51B72146000D3A067 /* BeaconTableViewHelper.m in Sources */,
 				6B6E80201B456055002CD0B0 /* BSDDiagnosticsAPI.m in Sources */,
 				6BEA67DB1B39518300B3C6C7 /* BSDServingAPI.m in Sources */,
 			);

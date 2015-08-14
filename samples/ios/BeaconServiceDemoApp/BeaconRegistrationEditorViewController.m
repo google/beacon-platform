@@ -99,6 +99,10 @@
   }
 }
 
+- (UIStatusBarStyle) preferredStatusBarStyle {
+  return UIStatusBarStyleLightContent;
+}
+
 #pragma mark - IBActions
 
 - (IBAction)cancelButtonPressed:(id)sender {
@@ -324,7 +328,7 @@
   if (textField == _stabilityTextField) {
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     ListSelectionViewController *vc =
-    [storyboard instantiateViewControllerWithIdentifier:@"ListSelectionViewController"];
+        [storyboard instantiateViewControllerWithIdentifier:@"ListSelectionViewController"];
     vc.itemsToDisplay = @[
                           @"STABLE",
                           @"PORTABLE",

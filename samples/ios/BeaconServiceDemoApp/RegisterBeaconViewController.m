@@ -94,6 +94,10 @@ NSString *GetNamespacedType(NSString *namespacedType) {
   _actionTableView.rowHeight = 80;
 }
 
+- (UIStatusBarStyle) preferredStatusBarStyle {
+  return UIStatusBarStyleLightContent;
+}
+
 - (void)finishAttachmentDownload {
   [_scanningThrobber stopAnimating];
   _scanningThrobber.hidden = YES;
