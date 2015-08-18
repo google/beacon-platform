@@ -194,8 +194,6 @@ static const NSTimeInterval kScanForThisLong = 5.0;
 }
 
 - (IBAction)scanForBeaconsPressed:(id)sender {
-
-  _pageTitle.text = @"Scanning …";
   _foundBeacons = [NSMutableArray array];
   [_tableViewHelper setScannedBeaconList:nil];
   [_tableViewHelper setBeaconRegistrationData:nil];
@@ -204,10 +202,7 @@ static const NSTimeInterval kScanForThisLong = 5.0;
   [_beaconListTableView reloadData];
 
   // UI Feedback for scanning.
-  _scanForBeaconsButton.enabled = NO;
-  _scanningThrobber.hidden = NO;
-  [_scanningThrobber startAnimating];
-
+  [self updateScanUI:NO withMessage:@"Scanning …"];
   _scanner = [[ESSBeaconScanner alloc] init];
   _scanner.delegate = self;
   [_scanner startScanning];
@@ -223,6 +218,17 @@ static const NSTimeInterval kScanForThisLong = 5.0;
   [_foundBeacons addObject:beaconInfo];
 }
 
+- (void)updateScanUI:(BOOL)enabled withMessage:(NSString *)message {
+  _pageTitle.text = message;
+  _scanForBeaconsButton.enabled = enabled;
+  _scanningThrobber.hidden = enabled;
+  if (enabled) {
+    [_scanningThrobber stopAnimating];
+  } else {
+    [_scanningThrobber startAnimating];
+  }
+}
+
 - (void)stopScanningNow:(NSTimer *)timer {
   [_scanner stopScanning];
 
@@ -234,8 +240,6 @@ static const NSTimeInterval kScanForThisLong = 5.0;
 
 #endif // SHOW_SOME_FAKE_BEACONIDS_FOR_TESTING
 
-  _pageTitle.text = @"Loading Data";
-
   NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[_foundBeacons count]];
   for (ESSBeaconInfo *info in _foundBeacons) {
     [ids addObject:PrintableBeaconIDFromData(info.beaconID.beaconID)];
@@ -243,32 +247,33 @@ static const NSTimeInterval kScanForThisLong = 5.0;
 
   [_tableViewHelper setScannedBeaconList:ids];
 
-  [BSDAdminAPI informationForSpecifiedBeaconIDs:ids completionHandler:
-      ^(NSDictionary *results, NSDictionary *errorInfo) {
+  if ([ids count]) {
+    _pageTitle.text = @"Loading Data";
+    
+    [BSDAdminAPI informationForSpecifiedBeaconIDs:ids completionHandler:
+        ^(NSDictionary *results, NSDictionary *errorInfo) {
 
-        NSLog(@"%@", results);
+          NSLog(@"%@", results);
 
-        // Reloading the tableview from within this block seems to be a terrible idea as it seems
-        // to keep a lot of references on a whole lot of things that take a while to unroll. So,
-        // instead, we'll just post a message to the main thread telling it to finish processing
-        // once we've unrolled the stack, etc.
-        dispatch_async(dispatch_get_main_queue(), ^{
-          [self finishBeaconIDLoad: results];
-        });
-      }
-  ];
-
+          // Reloading the tableview from within this block seems to be a terrible idea as it seems
+          // to keep a lot of references on a whole lot of things that take a while to unroll. So,
+          // instead, we'll just post a message to the main thread telling it to finish processing
+          // once we've unrolled the stack, etc.
+          dispatch_async(dispatch_get_main_queue(), ^{
+            [self finishBeaconIDLoad: results];
+          });
+        }
+    ];
+  } else {
+    [self updateScanUI:YES withMessage:@"Discovered Beacons"];
+  }
   _foundBeacons = nil;
 }
 
 - (void)finishBeaconIDLoad:(NSDictionary *)beaconRegistrationData {
-  [_scanningThrobber stopAnimating];
-  _scanningThrobber.hidden = YES;
-  _scanForBeaconsButton.enabled = YES;
-  _pageTitle.text = @"Discovered Beacons";
+  [self updateScanUI:YES withMessage:@"Discovered Beacons"];
   [_tableViewHelper setBeaconRegistrationData:beaconRegistrationData];
 }
-
 
 - (IBAction)unwindToContainerVC:(UIStoryboardSegue *)segue {
   // Don't actually need to do anything here.
