@@ -24,37 +24,41 @@ NSString *const kServingRequestErrorMessage = @"error_message";
 
 @implementation BSDServingAPI
 
-- (void)infoForObservedBeaconID:(NSString *)beaconID
++ (void)infoForObservedBeaconID:(NSString *)beaconID
                          APIKey:(NSString *)apiKey
               completionHandler:(void (^)(NSArray *, NSDictionary *))completionHandler {
 
-  NSData *binaryID = [BSDRESTRequest hexStringToNSData:[BSDRESTRequest sanitiseBeaconID:beaconID]];
+  NSData *binaryID = [BSDRESTRequest
+      hexStringToNSData:[BSDRESTRequest sanitiseBeaconID:beaconID]];
 
   NSDictionary *observation = @{
       @"observations" : @[ @{
         @"advertisedId" : @{
-          @"type" : @(1),
+          @"type" : @"EDDYSTONE",
           @"id" : [binaryID base64EncodedStringWithOptions:0],
         },
+        @"telemetry" : @"",
         @"timestampMs" : [BSDServingAPI RFC3339Timestamp],
       } ],
-      @"namespacedTypes" : @"*",
-  };
+      @"namespacedTypes" : @"com.google.location.locus/*",
+ };
 
-  NSError *error;
   NSData *jsonData = [NSJSONSerialization dataWithJSONObject:observation
-                                                     options:NSJSONWritingPrettyPrinted
-                                                       error:&error];
-  NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-
+                                                     options:0
+                                                       error:NULL];
   NSString *server =
       @"https://proximitybeacon.googleapis.com/v1beta1/beaconinfo:getforobserved?key=";
   server = [server stringByAppendingString:apiKey];
 
+  NSDictionary *httpHeaders = @{
+      @"Content-Type" : @"application/json",
+      @"Accept" : @"application/json",
+ };
+
   [BSDRESTRequest RESTfulJSONRequestToURL:[NSURL URLWithString:server]
                                    method:@"POST"
-                                 postBody:[jsonString dataUsingEncoding:NSUTF8StringEncoding]
-                           requestHeaders:@{}
+                                 postBody:jsonData
+                           requestHeaders:httpHeaders
                         completionHandler:
       ^(NSInteger httpResponseCode, NSString *response, NSError *requestError) {
         NSDictionary *results = nil, *error = nil;
@@ -67,30 +71,32 @@ NSString *const kServingRequestErrorMessage = @"error_message";
           error = [BSDServingAPI errorWithResponseBody:response
                                          defaultStatus:kServingRequestErrorNoSuchBeacon];
         }
-        
+
         completionHandler(results[@"beacons"], error);
       }
   ];
 }
 
+///
+/// The server only wants UTC, so make sure not to add any timezone stuff here.
+///
 + (NSString *)RFC3339Timestamp {
   NSDate *now = [[NSDate alloc] init];
-  NSTimeZone *localTimeZone = [NSTimeZone systemTimeZone];
   NSDateFormatter *rfc3339DateFormatter = [[NSDateFormatter alloc] init];
   NSLocale *enUSPOSIXLocale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
 
   [rfc3339DateFormatter setLocale:enUSPOSIXLocale];
-  [rfc3339DateFormatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH':'mm':'ssZ"];
-  [rfc3339DateFormatter setTimeZone:localTimeZone];
+  [rfc3339DateFormatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'"];
 
   NSString *dateString = [rfc3339DateFormatter stringFromDate:now];
 
   return dateString;
 }
 
+
 + (NSDictionary *)errorWithResponseBody:(NSString *)body defaultStatus:(NSString *)defaultStatus {
   NSDictionary *error = [NSJSONSerialization JSONObjectWithData:
-                         [body dataUsingEncoding:NSUTF8StringEncoding]
+      [body dataUsingEncoding:NSUTF8StringEncoding]
                                                         options:kNilOptions
                                                           error:NULL];
 

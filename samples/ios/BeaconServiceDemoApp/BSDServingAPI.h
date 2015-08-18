@@ -44,7 +44,7 @@ extern NSString *const kServingRequestErrorUnknown;
  * care about the attachment data or "*" to indicate you want any attachment data for which you
  * have access.
  */
-- (void)infoForObservedBeaconID:(NSString *)beaconID
++ (void)infoForObservedBeaconID:(NSString *)beaconID
                          APIKey:(NSString *)apiKey
               completionHandler:(void (^)(NSArray *, NSDictionary *))completionHandler;
 

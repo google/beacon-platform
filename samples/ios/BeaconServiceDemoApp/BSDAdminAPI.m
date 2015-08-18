@@ -114,7 +114,7 @@ NSString* URLEncodeString(NSString *string) {
                                                        error:nil];
 
   NSString *beaconIDStr = [NSString stringWithFormat:@"beacons/3!%@",
-                           [BSDRESTRequest sanitiseBeaconID:beaconID]];
+      [BSDRESTRequest sanitiseBeaconID:beaconID]];
   NSString *bearerHeader = [@"Bearer " stringByAppendingString:[BSDAdminAPI oauthBearerToken]];
   NSString *server = [BSDAdminAPI
       serverURLForQueryPath:[NSString stringWithFormat:@"/%@/attachments", beaconIDStr]];
