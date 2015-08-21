@@ -12,10 +12,10 @@ You *must* tie your version of the app to a project in the Google Developers Con
 
 The Proximity Beacon API is associated with your Google Developers Console account and uses the standard GDC authorization mechanisms. Follow the instructions at the [Authorizing with Google for REST APIs](https://developers.google.com/android/guides/http-auth) guide carefully to create a project and register the app with your account.
 
-- At step 4 where it says "Enable the API you'd like to use by setting the Status to ON", search for `Google Proximity Beacon API` and set its status to enabled
+- At step 4 where it says "Enable the API you'd like to use by setting the Status to ON", search for `Google Proximity Beacon API` and set its status to enabled.
+- You must create both an Android API Key and an Android OAuth 2.0 client ID.
 - The package name is `com.google.sample.beaconservice`
 - Note that there's currently a typo in how to get the SHA1 hash. The command you need to run is `keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore -list -v`. Note the space before the `-keystore` switch.
-- Once you've created the client ID you're done.
 
 ## Dependencies
 Enumerated in the app's [build.gradle](BeaconServiceDemoApp/app/build.gradle), we require:
