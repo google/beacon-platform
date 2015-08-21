@@ -4,9 +4,13 @@ A simple app that demonstrates usage of the [Proximity Beacon API](https://devel
 ## Requirements
 The app was developed with [Android Studio](http://developer.android.com/sdk/) and targets the Android Lollipop 5.1 (API 22) platform.
 
-## Registering the app with your Google Cloud Console project
+You must have at least one Google account on the device.
 
-The Proximity Beacon API is associated with your Google Cloud Console account and uses the standard GCC authorization mechanisms. Follow the instructions at the [Authorizing with Google for REST APIs](https://developers.google.com/android/guides/http-auth) guide to create a project and register the app with your account.
+You *must* tie your version of the app to a project in the Google Developers Console. Failure to do this will mean that all your calls to the Proximity Beacon API will fail with 403 errors. In particular, when you launch the app and scan for devices, all sighted beacons will appear to be locked (that is, owned by someone else).
+
+## Registering the app with the Google Developers Console
+
+The Proximity Beacon API is associated with your Google Developers Console account and uses the standard GDC authorization mechanisms. Follow the instructions at the [Authorizing with Google for REST APIs](https://developers.google.com/android/guides/http-auth) guide carefully to create a project and register the app with your account.
 
 - At step 4 where it says "Enable the API you'd like to use by setting the Status to ON", search for `Google Proximity Beacon API` and set its status to enabled
 - The package name is `com.google.sample.beaconservice`
@@ -37,3 +41,8 @@ The app will then use the [beacons.get](https://developers.google.com/beacons/pr
 - ![help](BeaconServiceDemoApp/app/src/main/res/drawable-hdpi/ic_action_help.png) Unknown status
 
 Clicking on an entry takes you to the management screen for that beacon. There you'll be able to register the beacon, update the location, stability, description, activation status, and create and delete simple attachment data. Fields that are editable are marked with the ![mode-edit](BeaconServiceDemoApp/app/src/main/res/drawable-mdpi/ic_action_mode_edit.png) icon.
+
+## FAQ
+Q. When I launch the app my beacons appear to be locked! Clicking on them says "Not Authorized"!
+
+A. The app fetches the status of every sighted beacon with a [get](https://developers.google.com/beacons/proximity/reference/rest/v1beta1/beacons/get) call. A 403 means you don't have permission. If you're certain the beacon ID hasn't been registered by someone else, this is because you haven't done the Google Developers Console dance correctly. Check that you've followed all the steps outlined above. You need to have a dev console project, with an OAuth 2.0 Client ID that has the right package name and the SHA1 of the key that Android Studio is using to sign your app. If any piece of this puzzle is missing, the server will reject your calls with a 403 not authorized call.
