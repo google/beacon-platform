@@ -34,22 +34,27 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.sample.libproximitybeacon.ProximityBeacon;
+import com.google.sample.libproximitybeacon.ProximityBeaconImpl;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+
 /**
  * The main beacon management UI. Depending on the status of the beacon, presents the
- * register, activate, deactivate and decommission options. Also allows simple CRUD operations
+ * activate, deactivate and decommission options. Also allows simple CRUD operations
  * on the beacon's attachments.
  */
 public class ManageBeaconFragment extends Fragment {
@@ -62,7 +67,6 @@ public class ManageBeaconFragment extends Fragment {
     new TableLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
 
   private Beacon beacon;
-  private String accountName;
   private String namespace;
 
   private TextView advertisedId_Type;
@@ -79,12 +83,15 @@ public class ManageBeaconFragment extends Fragment {
   private TextView attachmentsLabel;
   private TableLayout attachmentsTable;
 
+  private ProximityBeacon client;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Bundle b = this.getArguments();
     beacon = b.getParcelable("beacon");
-    accountName = b.getString("accountName");
+    String accountName = b.getString("accountName");
+    client = new ProximityBeaconImpl(getActivity(), accountName);
   }
 
   @Override
@@ -191,39 +198,40 @@ public class ManageBeaconFragment extends Fragment {
     decommissionButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        new AlertDialog.Builder(getActivity()).setTitle("Decommission Beacon").setMessage(
-          "Are you sure you want to decommission this beacon? This operation is " +
-          "irreversible and the beacon cannot be registered again")
-          .setPositiveButton("Decommission", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.dismiss();
-              Response.Listener<JSONObject> responseListener = new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                  if (response.length() == 0) {
-                    beacon.status = Beacon.STATUS_DECOMMISSIONED;
-                    updateBeacon();
+        new AlertDialog.Builder(getActivity())
+            .setTitle("Decommission Beacon")
+            .setMessage("Are you sure you want to decommission this beacon? This operation is "
+                + "irreversible and the beacon cannot be registered again")
+            .setPositiveButton("Decommission", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                Callback decommissionCallback = new Callback() {
+                  @Override
+                  public void onFailure(Request request, IOException e) {
+                    Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
                   }
-                  else {
-                    Toast
-                      .makeText(getActivity(), "Error: " + response.toString(), Toast.LENGTH_LONG)
-                      .show();
+
+                  @Override
+                  public void onResponse(Response response) throws IOException {
+                    if (response.isSuccessful()) {
+                      beacon.status = Beacon.STATUS_DECOMMISSIONED;
+                      updateBeacon();
+                    } else {
+                      Toast.makeText(getActivity(), "Error: " + response, Toast.LENGTH_LONG).show();
+                    }
                   }
-                }
-              };
-              Response.ErrorListener errorListener =
-                AlertingErrorListener.create(getActivity(), TAG);
-              String urlPath = beacon.getBeaconName() + ":decommission";
-              new BeaconServiceTask(getActivity(), accountName, Request.Method.POST, urlPath,
-                                    responseListener, errorListener).execute();
-            }
-          }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            dialog.dismiss();
-          }
-        }).show();
+                };
+                client.decommissionBeacon(decommissionCallback, beacon.getBeaconName());
+              }
+            })
+            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+              }
+            })
+            .show();
       }
     });
 
@@ -233,12 +241,21 @@ public class ManageBeaconFragment extends Fragment {
 
     // Fetch the namespace for the developer console project ID. We redraw the UI once that
     // request completes.
-    Response.Listener<JSONObject> responseListener = new Response.Listener<JSONObject>() {
+    // TODO: cache this.
+    Callback listNamespacesCallback = new Callback() {
       @Override
-      public void onResponse(JSONObject response) {
+      public void onFailure(Request request, IOException e) {
+        Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+      }
+
+      @Override
+      public void onResponse(Response response) throws IOException {
+        String body = response.body().string();
+        JSONObject json;
         try {
+          json = new JSONObject(body);
+          JSONArray namespaces = json.getJSONArray("namespaces");
           // At present there can be only one namespace.
-          JSONArray namespaces = response.getJSONArray("namespaces");
           String tmp = namespaces.getJSONObject(0).getString("namespaceName");
           if (tmp.startsWith("namespaces/")) {
             namespace = tmp.substring("namespaces/".length());
@@ -246,16 +263,12 @@ public class ManageBeaconFragment extends Fragment {
             namespace = tmp;
           }
           redraw();
-        }
-        catch (JSONException e) {
-          Log.e(TAG, "JSONException in list namespaces", e);
+        } catch (JSONException e) {
+          Log.e(TAG, "JSONException", e);
         }
       }
     };
-    Response.ErrorListener errorListener = AlertingErrorListener.create(getActivity(), TAG);
-    new BeaconServiceTask(getActivity(), accountName, Request.Method.GET, "namespaces",
-                          responseListener, errorListener).execute();
-
+    client.listNamespaces(listNamespacesCallback);
     return rootView;
   }
 
@@ -299,23 +312,35 @@ public class ManageBeaconFragment extends Fragment {
       redraw();
       return;
     }
-    try {
-      JSONObject body = beacon.toJson();
-      Response.Listener<JSONObject> listener = new Response.Listener<JSONObject>() {
-        @Override
-        public void onResponse(JSONObject response) {
-          beacon = new Beacon(response);
-          redraw();
+
+    Callback updateBeaconCallback = new Callback() {
+      @Override
+      public void onFailure(Request request, IOException e) {
+        Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+      }
+
+      @Override
+      public void onResponse(Response response) throws IOException {
+        String body = response.body().string();
+        try {
+          beacon = new Beacon(new JSONObject(body));
+        } catch (JSONException e) {
+          Log.e(TAG, "Failed JSON creation", e);
+          return;
         }
-      };
-      Response.ErrorListener errorListener = AlertingErrorListener.create(getActivity(), TAG);
-      String urlPath = beacon.getBeaconName();
-      new BeaconServiceTask(getActivity(), accountName, Request.Method.PUT, urlPath, body, listener,
-                            errorListener).execute();
+        redraw();
+      }
+    };
+
+    JSONObject json;
+    try {
+      json = beacon.toJson();
+    } catch (JSONException e) {
+      logErrorAndToast("JSONException in creating update request", e);
+      return;
     }
-    catch (JSONException e) {
-      Log.e(TAG, "Failed to update beacon, Beacon.toJson() error", e);
-    }
+
+    client.updateBeacon(updateBeaconCallback, beacon.getBeaconName(), json);
   }
 
   private View.OnClickListener createActionButtonOnClickListener(final String status) {
@@ -331,34 +356,38 @@ public class ManageBeaconFragment extends Fragment {
       @Override
       public void onClick(View v) {
         actionButton.setEnabled(false);
-        Response.Listener<JSONObject> listener = new Response.Listener<JSONObject>() {
+
+        Callback onClickCallback = new Callback() {
           @Override
-          public void onResponse(JSONObject response) {
-            if (response.length() > 0) {
-              // Activate, deactivate and decommission return empty responses. Register returns
-              // a beacon object.
-              beacon = new Beacon(response);
+          public void onFailure(Request request, IOException e) {
+            Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+          }
+
+          @Override
+          public void onResponse(final Response response) throws IOException {
+            if (response.isSuccessful()) {
+              JSONObject json = Utils.toJson(response);
+              if (json != null && json.length() > 0) {
+                // Activate, deactivate and decommission return empty responses. Register returns
+                // a beacon object.
+                beacon = new Beacon(json);
+              }
+              updateBeacon();
             }
-            updateBeacon();
             actionButton.setEnabled(true);
           }
         };
-        View[] toEnable = {actionButton};
-        Response.ErrorListener errorListener =
-          AlertingErrorListener.create(getActivity(), TAG, toEnable, null);
-        String urlPath = beacon.getBeaconName();
-        JSONObject body = null;
         switch (status) {
           case Beacon.STATUS_ACTIVE:
-            urlPath += ":activate";
+            client.activateBeacon(onClickCallback, beacon.getBeaconName());
             break;
           case Beacon.STATUS_INACTIVE:
-            urlPath += ":deactivate";
+            client.deactivateBeacon(onClickCallback, beacon.getBeaconName());
             break;
           case Beacon.UNREGISTERED:
-            urlPath = "beacons:register";
             try {
-              body = beacon.toJson().put("status", Beacon.STATUS_ACTIVE);
+              JSONObject activeBeacon = beacon.toJson().put("status", Beacon.STATUS_ACTIVE);
+              client.registerBeacon(onClickCallback, activeBeacon);
             }
             catch (JSONException e) {
               toast("JSONException: " + e);
@@ -367,8 +396,6 @@ public class ManageBeaconFragment extends Fragment {
             }
             break;
         }
-        new BeaconServiceTask(getActivity(), accountName, Request.Method.POST, urlPath, body,
-                              listener, errorListener).execute();
       }
     };
   }
@@ -461,7 +488,9 @@ public class ManageBeaconFragment extends Fragment {
       description.setText(R.string.click_to_set);
     }
 
-    listAttachments();
+    if (!beacon.status.equals(Beacon.UNREGISTERED)) {
+      listAttachments();
+    }
   }
 
   private TextView makeTextView(String text) {
@@ -485,19 +514,24 @@ public class ManageBeaconFragment extends Fragment {
       @Override
       public void onClick(View v) {
         Utils.setEnabledViews(false, button);
-        Response.Listener<JSONObject> responseListener = new Response.Listener<JSONObject>() {
+        Callback deleteAttachmentCallback = new Callback() {
           @Override
-          public void onResponse(JSONObject response) {
-            if (response.length() == 0) {
+          public void onFailure(Request request, IOException e) {
+            Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+          }
+
+          @Override
+          public void onResponse(Response response) throws IOException {
+            if (response.isSuccessful()) {
               attachmentsTable.removeView(attachmentsTable.findViewById(viewId));
+            } else {
+              Log.e(TAG, "Failed delete request: " + response);
+              Toast.makeText(getActivity(), "Failed to delete attachment: " + response,
+                  Toast.LENGTH_LONG).show();
             }
           }
         };
-
-        Response.ErrorListener errorListener = AlertingErrorListener.create(getActivity(), TAG);
-
-        new BeaconServiceTask(getActivity(), accountName, Request.Method.DELETE, attachmentName,
-                              responseListener, errorListener).execute();
+        client.deleteAttachment(deleteAttachmentCallback, attachmentName);
       }
     });
     return button;
@@ -526,35 +560,39 @@ public class ManageBeaconFragment extends Fragment {
           return;
         }
 
-        Response.Listener<JSONObject> createAttachmentResponseListener =
-          new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
+        Utils.setEnabledViews(false, insertButton);
+        JSONObject body = buildCreateAttachmentJsonBody(namespace, type, data);
+
+        Callback createAttachmentCallback = new Callback() {
+          @Override
+          public void onFailure(Request request, IOException e) {
+            Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+            Utils.setEnabledViews(false, insertButton);
+          }
+
+          @Override
+          public void onResponse(Response response) throws IOException {
+            if (response.isSuccessful()) {
+              String body = response.body().string();
               try {
-                attachmentsTable.addView(makeAttachmentRow(response), 2);
+                JSONObject json = new JSONObject(body);
+                attachmentsTable.addView(makeAttachmentRow(json), 2);
                 namespaceTextView.setText(namespace);
                 typeEditText.setText("");
                 typeEditText.requestFocus();
                 dataEditText.setText("");
                 insertButton.setEnabled(true);
+              } catch (JSONException e) {
+                logErrorAndToast("JSONException in building attachment data", e);
               }
-              catch (JSONException e) {
-                Toast.makeText(getActivity(), "Bad JSON response: " + response, Toast.LENGTH_LONG)
-                  .show();
-              }
+            } else {
+              logErrorAndToast("Create attachment request unsuccessful" + response);
             }
-          };
+            Utils.setEnabledViews(true, insertButton);
+          }
+        };
 
-        View[] toEnable = {insertButton};
-        Response.ErrorListener createAttachmentErrorListener =
-          AlertingErrorListener.create(getActivity(), TAG, toEnable, null);
-
-        Utils.setEnabledViews(false, insertButton);
-        String urlPath = beacon.getBeaconName() + "/attachments";
-        JSONObject body = buildCreateAttachmentJsonBody(namespace, type, data);
-        new BeaconServiceTask(getActivity(), accountName, Request.Method.POST, urlPath, body,
-                              createAttachmentResponseListener, createAttachmentErrorListener)
-          .execute();
+        client.createAttachment(createAttachmentCallback, beacon.getBeaconName(), body);
       }
     };
   }
@@ -573,31 +611,38 @@ public class ManageBeaconFragment extends Fragment {
   // Fetches attachments for this beacon and builds the list view showing the existing attachments
   // and a row to add more.
   private void listAttachments() {
-    final Response.Listener<JSONObject> responseListener = new Response.Listener<JSONObject>() {
+    Callback listAttachmentsCallback = new Callback() {
       @Override
-      public void onResponse(JSONObject response) {
-        try {
-          attachmentsTable.removeAllViews();
-          attachmentsTable.addView(makeAttachmentTableHeader());
-          attachmentsTable.addView(makeAttachmentInsertRow());
-          if (response.length() == 0) {  // No attachment data
-            return;
+      public void onFailure(Request request, IOException e) {
+        Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+      }
+
+      @Override
+      public void onResponse(Response response) throws IOException {
+        if (response.isSuccessful()) {
+          String body = response.body().string();
+          try {
+            JSONObject json = new JSONObject(body);
+            attachmentsTable.removeAllViews();
+            attachmentsTable.addView(makeAttachmentTableHeader());
+            attachmentsTable.addView(makeAttachmentInsertRow());
+            if (json.length() == 0) {  // No attachment data
+              return;
+            }
+            JSONArray attachments = json.getJSONArray("attachments");
+            for (int i = 0; i < attachments.length(); i++) {
+              JSONObject attachment = attachments.getJSONObject(i);
+              attachmentsTable.addView(makeAttachmentRow(attachment));
+            }
+          } catch (JSONException e) {
+            Log.e(TAG, "JSONException in fetching attachments", e);
           }
-          JSONArray attachments = response.getJSONArray("attachments");
-          for (int i = 0; i < attachments.length(); i++) {
-            JSONObject attachment = attachments.getJSONObject(i);
-            attachmentsTable.addView(makeAttachmentRow(attachment));
-          }
-        }
-        catch (JSONException e) {
-          Log.e(TAG, "JSONException in fetching attachments", e);
+        } else {
+          Log.e(TAG, "Unsuccessful response from list attachments: " + response);
         }
       }
     };
-    Response.ErrorListener errorListener = AlertingErrorListener.create(getActivity(), TAG);
-    String urlPath = beacon.getBeaconName() + "/attachments?namespacedType=*/*";
-    new BeaconServiceTask(getActivity(), accountName, Request.Method.GET, urlPath, responseListener,
-                          errorListener).execute();
+    client.listAttachments(listAttachmentsCallback, beacon.getBeaconName());
   }
 
   private LinearLayout makeAttachmentTableHeader() {
@@ -648,6 +693,16 @@ public class ManageBeaconFragment extends Fragment {
     row.addView(makeTextView(base64Decoded));
     row.addView(createAttachmentDeleteButton(id, attachment.getString("attachmentName")));
     return row;
+  }
+
+  private void logErrorAndToast(String message) {
+    Log.e(TAG, message);
+    toast(message);
+  }
+
+  private void logErrorAndToast(String message, Exception e) {
+    Log.e(TAG, message, e);
+    toast(message);
   }
 
   private void toast(String s) {

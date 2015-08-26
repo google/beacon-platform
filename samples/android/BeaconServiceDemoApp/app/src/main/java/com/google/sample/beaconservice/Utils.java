@@ -18,14 +18,22 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 
 import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 
 
 class Utils {
+  private static final String TAG = Utils.class.getSimpleName();
   private Utils() {}  // static functions only
 
   private static final char[] HEX = "0123456789ABCDEF".toCharArray();
@@ -35,7 +43,7 @@ class Utils {
   }
 
   static String base64Encode(byte[] b) {
-    return Base64.encodeToString(b, Base64.DEFAULT);
+    return Base64.encodeToString(b, Base64.DEFAULT).trim();
   }
 
   static String toHexString(byte[] bytes) {
@@ -46,6 +54,28 @@ class Utils {
       chars[i * 2 + 1] = HEX[c & 0x0F];
     }
     return new String(chars).toLowerCase();
+  }
+
+  /**
+   * Returns a JSONObject from the HTTP response, or null if the response body couldn't be parsed
+   * to JSON.
+   */
+  static JSONObject toJson(Response response) {
+    String body;
+    try {
+      body = response.body().string();
+    } catch (IOException e) {
+      Log.e(TAG, "IOException", e);
+      return null;
+    }
+    JSONObject json;
+    try {
+      json = new JSONObject(body);
+    } catch (JSONException e) {
+      Log.e(TAG, "JSONException", e);
+      return null;
+    }
+    return json;
   }
 
   static void handleAuthException(final Activity activity, final Exception e) {
