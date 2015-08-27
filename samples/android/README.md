@@ -1,5 +1,6 @@
 # Android Beacon Service Demo App
 A simple app that demonstrates usage of the [Proximity Beacon API](https://developers.google.com/beacons/proximity/).
+It contains a [reusable library module](BeaconServiceDemoApp/libproximitybeacon) that implements async HTTP communication with the proximity beacon service.
 
 ## Requirements
 The app was developed with [Android Studio](http://developer.android.com/sdk/) and targets the Android Lollipop 5.1 (API 22) platform.
