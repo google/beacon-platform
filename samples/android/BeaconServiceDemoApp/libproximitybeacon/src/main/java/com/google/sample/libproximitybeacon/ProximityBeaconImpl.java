@@ -164,7 +164,6 @@ public class ProximityBeaconImpl implements ProximityBeacon {
           default: break;
         }
         Request request = requestBuilder.build();
-        Log.d(TAG, request.toString());
         httpClient.newCall(request).enqueue(new HttpCallback(callback));
       } catch (UserRecoverableAuthException e) {
         // GooglePlayServices.apk is either old, disabled, or not present

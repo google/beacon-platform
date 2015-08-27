@@ -209,7 +209,7 @@ public class ManageBeaconFragment extends Fragment {
                 Callback decommissionCallback = new Callback() {
                   @Override
                   public void onFailure(Request request, IOException e) {
-                    Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+                    logErrorAndToast("Failed request: " + request, e);
                   }
 
                   @Override
@@ -218,7 +218,8 @@ public class ManageBeaconFragment extends Fragment {
                       beacon.status = Beacon.STATUS_DECOMMISSIONED;
                       updateBeacon();
                     } else {
-                      Toast.makeText(getActivity(), "Error: " + response, Toast.LENGTH_LONG).show();
+                      String body = response.body().string();
+                      logErrorAndToast("Unsuccessful decommissionBeacon request: " + body);
                     }
                   }
                 };
@@ -245,26 +246,29 @@ public class ManageBeaconFragment extends Fragment {
     Callback listNamespacesCallback = new Callback() {
       @Override
       public void onFailure(Request request, IOException e) {
-        Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+        logErrorAndToast("Failed request: " + request, e);
       }
 
       @Override
       public void onResponse(Response response) throws IOException {
         String body = response.body().string();
-        JSONObject json;
-        try {
-          json = new JSONObject(body);
-          JSONArray namespaces = json.getJSONArray("namespaces");
-          // At present there can be only one namespace.
-          String tmp = namespaces.getJSONObject(0).getString("namespaceName");
-          if (tmp.startsWith("namespaces/")) {
-            namespace = tmp.substring("namespaces/".length());
-          } else {
-            namespace = tmp;
+        if (response.isSuccessful()) {
+          try {
+            JSONObject json = new JSONObject(body);
+            JSONArray namespaces = json.getJSONArray("namespaces");
+            // At present there can be only one namespace.
+            String tmp = namespaces.getJSONObject(0).getString("namespaceName");
+            if (tmp.startsWith("namespaces/")) {
+              namespace = tmp.substring("namespaces/".length());
+            } else {
+              namespace = tmp;
+            }
+            redraw();
+          } catch (JSONException e) {
+            Log.e(TAG, "JSONException", e);
           }
-          redraw();
-        } catch (JSONException e) {
-          Log.e(TAG, "JSONException", e);
+        } else {
+          logErrorAndToast("Unsuccessful listNamespaces request: " + body);
         }
       }
     };
@@ -316,19 +320,23 @@ public class ManageBeaconFragment extends Fragment {
     Callback updateBeaconCallback = new Callback() {
       @Override
       public void onFailure(Request request, IOException e) {
-        Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+        logErrorAndToast("Failed request: " + request, e);
       }
 
       @Override
       public void onResponse(Response response) throws IOException {
         String body = response.body().string();
-        try {
-          beacon = new Beacon(new JSONObject(body));
-        } catch (JSONException e) {
-          Log.e(TAG, "Failed JSON creation", e);
-          return;
+        if (response.isSuccessful()) {
+          try {
+            beacon = new Beacon(new JSONObject(body));
+          } catch (JSONException e) {
+            logErrorAndToast("Failed JSON creation from response: " + body, e);
+            return;
+          }
+          redraw();
+        } else {
+          logErrorAndToast("Unsuccessful updateBeacon request: " + body);
         }
-        redraw();
       }
     };
 
@@ -360,19 +368,26 @@ public class ManageBeaconFragment extends Fragment {
         Callback onClickCallback = new Callback() {
           @Override
           public void onFailure(Request request, IOException e) {
-            Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+            logErrorAndToast("Failed request: " + request, e);
           }
 
           @Override
           public void onResponse(final Response response) throws IOException {
+            String body = response.body().string();
             if (response.isSuccessful()) {
-              JSONObject json = Utils.toJson(response);
-              if (json != null && json.length() > 0) {
-                // Activate, deactivate and decommission return empty responses. Register returns
-                // a beacon object.
-                beacon = new Beacon(json);
+              try {
+                JSONObject json = new JSONObject(body);
+                if (json.length() > 0) {
+                  // Activate, deactivate and decommission return empty responses. Register returns
+                  // a beacon object.
+                  beacon = new Beacon(json);
+                }
+                updateBeacon();
+              } catch (JSONException e) {
+                logErrorAndToast("Failed JSON creation from response: " + body, e);
               }
-              updateBeacon();
+            } else {
+              logErrorAndToast("Unsuccessful request: " + body);
             }
             actionButton.setEnabled(true);
           }
@@ -517,7 +532,7 @@ public class ManageBeaconFragment extends Fragment {
         Callback deleteAttachmentCallback = new Callback() {
           @Override
           public void onFailure(Request request, IOException e) {
-            Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+            logErrorAndToast("Failed request: " + request, e);
           }
 
           @Override
@@ -525,9 +540,8 @@ public class ManageBeaconFragment extends Fragment {
             if (response.isSuccessful()) {
               attachmentsTable.removeView(attachmentsTable.findViewById(viewId));
             } else {
-              Log.e(TAG, "Failed delete request: " + response);
-              Toast.makeText(getActivity(), "Failed to delete attachment: " + response,
-                  Toast.LENGTH_LONG).show();
+              String body = response.body().string();
+              logErrorAndToast("Unsuccessful deleteAttachment request: " + body);
             }
           }
         };
@@ -566,14 +580,14 @@ public class ManageBeaconFragment extends Fragment {
         Callback createAttachmentCallback = new Callback() {
           @Override
           public void onFailure(Request request, IOException e) {
-            Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+            logErrorAndToast("Failed request: " + request, e);
             Utils.setEnabledViews(false, insertButton);
           }
 
           @Override
           public void onResponse(Response response) throws IOException {
+            String body = response.body().string();
             if (response.isSuccessful()) {
-              String body = response.body().string();
               try {
                 JSONObject json = new JSONObject(body);
                 attachmentsTable.addView(makeAttachmentRow(json), 2);
@@ -586,7 +600,7 @@ public class ManageBeaconFragment extends Fragment {
                 logErrorAndToast("JSONException in building attachment data", e);
               }
             } else {
-              logErrorAndToast("Create attachment request unsuccessful" + response);
+              logErrorAndToast("Unsuccessful createAttachment request: " + body);
             }
             Utils.setEnabledViews(true, insertButton);
           }
@@ -614,13 +628,13 @@ public class ManageBeaconFragment extends Fragment {
     Callback listAttachmentsCallback = new Callback() {
       @Override
       public void onFailure(Request request, IOException e) {
-        Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+        logErrorAndToast("Failed request: " + request, e);
       }
 
       @Override
       public void onResponse(Response response) throws IOException {
+        String body = response.body().string();
         if (response.isSuccessful()) {
-          String body = response.body().string();
           try {
             JSONObject json = new JSONObject(body);
             attachmentsTable.removeAllViews();
@@ -638,7 +652,7 @@ public class ManageBeaconFragment extends Fragment {
             Log.e(TAG, "JSONException in fetching attachments", e);
           }
         } else {
-          Log.e(TAG, "Unsuccessful response from list attachments: " + response);
+          logErrorAndToast("Unsuccessful listAttachments request: " + body);
         }
       }
     };
@@ -706,6 +720,6 @@ public class ManageBeaconFragment extends Fragment {
   }
 
   private void toast(String s) {
-    Toast.makeText(getActivity(), s, Toast.LENGTH_SHORT).show();
+    Toast.makeText(getActivity(), s, Toast.LENGTH_LONG).show();
   }
 }
