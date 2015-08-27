@@ -35,7 +35,7 @@ class Utils {
   }
 
   static String base64Encode(byte[] b) {
-    return Base64.encodeToString(b, Base64.DEFAULT);
+    return Base64.encodeToString(b, Base64.DEFAULT).trim();
   }
 
   static String toHexString(byte[] bytes) {

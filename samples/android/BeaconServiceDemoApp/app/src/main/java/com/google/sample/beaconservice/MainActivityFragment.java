@@ -48,14 +48,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.google.android.gms.common.AccountPicker;
+import com.google.sample.libproximitybeacon.ProximityBeacon;
+import com.google.sample.libproximitybeacon.ProximityBeaconImpl;
+import com.squareup.okhttp.Callback;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -116,6 +117,8 @@ public class MainActivityFragment extends Fragment {
   private Button scanButton;
   private TextView accountNameView;
 
+  ProximityBeacon client;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -152,7 +155,6 @@ public class MainActivityFragment extends Fragment {
 
         // Draw it immediately and kick off a async request to fetch the registration status,
         // redrawing when the server returns.
-
         Log.i(TAG, "id " + Utils.toHexString(id) + ", rssi " + result.getRssi());
 
         Beacon beacon = new Beacon("EDDYSTONE", id, Beacon.STATUS_UNSPECIFIED, result.getRssi());
@@ -180,50 +182,50 @@ public class MainActivityFragment extends Fragment {
   private void insertIntoListAndFetchStatus(final Beacon beacon) {
     arrayAdapter.add(beacon);
     arrayAdapter.sort(RSSI_COMPARATOR);
-    Response.Listener<JSONObject> responseListener = new Response.Listener<JSONObject>() {
+    Callback getBeaconCallback = new Callback() {
       @Override
-      public void onResponse(JSONObject response) {
+      public void onFailure(com.squareup.okhttp.Request request, IOException e) {
+        Log.e(TAG, String.format("Failed request: %s, IOException %s", request, e));
+      }
+
+      @Override
+      public void onResponse(com.squareup.okhttp.Response response) throws IOException {
+        Beacon fetchedBeacon;
+        switch (response.code()) {
+          case 200:
+            try {
+              String body = response.body().string();
+              fetchedBeacon = new Beacon(new JSONObject(body));
+            } catch (JSONException e) {
+              Log.e(TAG, "JSONException", e);
+              return;
+            }
+            break;
+          case 403:
+            fetchedBeacon = new Beacon(beacon.type, beacon.id, Beacon.NOT_AUTHORIZED, beacon.rssi);
+            break;
+          case 404:
+            fetchedBeacon = new Beacon(beacon.type, beacon.id, Beacon.UNREGISTERED, beacon.rssi);
+            break;
+          default:
+            Log.e(TAG, "Unhandled beacon service response: " + response);
+            return;
+        }
         int pos = arrayAdapter.getPosition(beacon);
-        arrayList.set(pos, new Beacon(response));
+        arrayList.set(pos, fetchedBeacon);
+        updateArrayAdapter();
+      }
+    };
+    client.getBeacon(getBeaconCallback, beacon.getBeaconName());
+  }
+
+  private void updateArrayAdapter() {
+    getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
         arrayAdapter.notifyDataSetChanged();
       }
-    };
-    Response.ErrorListener errorListener = new Response.ErrorListener() {
-      @Override
-      public void onErrorResponse(VolleyError error) {
-        String registrationStatus = Beacon.STATUS_UNSPECIFIED;
-        try {
-          if (error.networkResponse == null || error.networkResponse.data == null) {
-            String msg = "Unhandled Volley error: " + error.toString();
-            Log.e(TAG, msg);
-            return;
-          }
-          JSONObject err = new JSONObject(new String(error.networkResponse.data));
-          int responseCode = err.getJSONObject("error").getInt("code");
-          if (responseCode == 404) {
-            registrationStatus = Beacon.UNREGISTERED;
-          }
-          else if (responseCode == 403) {
-            registrationStatus = Beacon.NOT_AUTHORIZED;
-          }
-          else {
-            Log.e(TAG, "Unhandled beacon service response: " + err.toString());
-          }
-        }
-        catch (JSONException e) {
-          Log.e(TAG, "JSONException", e);
-        }
-        finally {
-          int pos = arrayAdapter.getPosition(beacon);
-          arrayList.set(pos, new Beacon(beacon.type, beacon.id, registrationStatus, beacon.rssi));
-          arrayAdapter.notifyDataSetChanged();
-        }
-      }
-    };
-    String urlPath = beacon.getBeaconName();
-    String accountName = accountNameView.getText().toString();
-    new BeaconServiceTask(getActivity(), accountName, Request.Method.GET, urlPath,
-                          responseListener, errorListener).execute();
+    });
   }
 
   private void createScanner() {
@@ -329,10 +331,9 @@ public class MainActivityFragment extends Fragment {
 
     // Set the account name from the shared prefs if we ever set it before.
     String accountName = sharedPreferences.getString("accountName", "");
-    if (accountName != null && !accountName.isEmpty()) {
+    if (!accountName.isEmpty()) {
       accountNameView.setText(accountName);
-    }
-    else {
+    } else {
       pickUserAccount();
     }
 
@@ -344,13 +345,13 @@ public class MainActivityFragment extends Fragment {
         Beacon beacon = arrayAdapter.getItem(position);
         if (beacon.status.equals(Beacon.NOT_AUTHORIZED)) {
           new AlertDialog.Builder(getActivity()).setTitle("Not Authorized")
-            .setMessage("You don't have permission to view the details of this beacon")
-            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-              }
-            }).show();
+              .setMessage("You don't have permission to view the details of this beacon")
+              .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                  dialog.dismiss();
+                }
+              }).show();
           return;
         }
         if (beacon.status.equals(Beacon.STATUS_UNSPECIFIED)) {
@@ -362,13 +363,13 @@ public class MainActivityFragment extends Fragment {
         ManageBeaconFragment fragment = new ManageBeaconFragment();
         fragment.setArguments(bundle);
         getFragmentManager()
-          .beginTransaction()
-          .replace(R.id.container, fragment)
-          .addToBackStack(TAG)
-          .commit();
+            .beginTransaction()
+            .replace(R.id.container, fragment)
+            .addToBackStack(TAG)
+            .commit();
       }
     });
-
+    client = new ProximityBeaconImpl(getActivity(), accountNameView.getText().toString());
     return rootView;
   }
 
