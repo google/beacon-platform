@@ -281,13 +281,30 @@ public class ManageBeaconFragment extends Fragment {
     if (requestCode == Constants.REQUEST_CODE_PLACE_PICKER) {
       if (resultCode == Activity.RESULT_OK) {
         Place place = PlacePicker.getPlace(data, getActivity());
-        placeId.setText(place.getId());
-        beacon.placeId = place.getId();
+        if (place == null) {
+          return;
+        }
+        // The place picker presents two selection options: "select this location" and
+        // "nearby places". Only the nearby places selection returns a placeId we can
+        // submit to the service; the location selection will return a hex-like 0xbeef
+        // identifier for that position instead, which isn't what we want. Here we check
+        // if the entire string is hex and clear the placeId if it is.
+        String id = place.getId();
+        if (id.startsWith("0x") && id.matches("0x[0-9a-f]+")) {
+          placeId.setText("");
+          beacon.placeId = "";
+        } else {
+          placeId.setText(id);
+          beacon.placeId = id;
+        }
         LatLng placeLatLng = place.getLatLng();
         latLng.setText(placeLatLng.toString());
         beacon.latitude = placeLatLng.latitude;
         beacon.longitude = placeLatLng.longitude;
         updateBeacon();
+      } else {
+        logErrorAndToast("Error loading place picker. Is the Places API enabled? "
+            + "See https://developers.google.com/places/android-api/signup for more detail");
       }
     }
   }
