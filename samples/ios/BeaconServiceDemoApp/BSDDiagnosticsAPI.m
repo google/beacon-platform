@@ -20,6 +20,7 @@ static NSString *const kServerPath = @"https://proximitybeacon.googleapis.com/v1
 
 NSString *const kDiagnosticsRequestErrorStatus = @"error_status";
 NSString *const kDiagnosticsRequestErrorMessage = @"error_message";
+NSString *const kDiagnosticsRequestErrorObject = @"error_details_object";
 
 static NSString *const kDiagnosticsUnknownError = @"unknown_diagnostics_error";
 
@@ -91,7 +92,8 @@ static NSString *const kDiagnosticsUnknownError = @"unknown_diagnostics_error";
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
-          error = [BSDDiagnosticsAPI errorWithResponseBody:response];
+          error = [BSDDiagnosticsAPI errorWithRequestError:requestError
+                                              responseBody:response];
         }
          
         completionHandler(results, error);
@@ -108,7 +110,18 @@ static NSString *const kDiagnosticsUnknownError = @"unknown_diagnostics_error";
   return [kServerPath stringByAppendingString: queryPath];
 }
 
-+ (NSDictionary *)errorWithResponseBody:(NSString *)body {
++ (NSDictionary *)errorWithRequestError:(NSError *)requestError
+                           responseBody:(NSString *)body {
+  if (requestError) {
+    return @{
+        kDiagnosticsRequestErrorStatus: @"request_error",
+        kDiagnosticsRequestErrorStatus: @"Something went wrong with the request to the remote "
+                                        @"server; check the error object (in this dictionary) for "
+                                        @"details.",
+        kDiagnosticsRequestErrorObject: requestError
+    };
+  }
+
   NSDictionary *error = [NSJSONSerialization JSONObjectWithData:
       [body dataUsingEncoding:NSUTF8StringEncoding]
                                                         options:kNilOptions
