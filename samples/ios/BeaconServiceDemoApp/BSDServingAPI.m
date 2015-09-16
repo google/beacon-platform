@@ -21,6 +21,7 @@ NSString *const kServingRequestErrorUnknown = @"unknown_error";
 
 NSString *const kServingRequestErrorStatus = @"error_status";
 NSString *const kServingRequestErrorMessage = @"error_message";
+NSString *const kServingRequestErrorObject = @"error_details_object";
 
 @implementation BSDServingAPI
 
@@ -68,7 +69,8 @@ NSString *const kServingRequestErrorMessage = @"error_message";
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
-          error = [BSDServingAPI errorWithResponseBody:response
+          error = [BSDServingAPI errorWithRequestError:requestError
+                                          responseBody:response
                                          defaultStatus:kServingRequestErrorNoSuchBeacon];
         }
 
@@ -94,7 +96,19 @@ NSString *const kServingRequestErrorMessage = @"error_message";
 }
 
 
-+ (NSDictionary *)errorWithResponseBody:(NSString *)body defaultStatus:(NSString *)defaultStatus {
++ (NSDictionary *)errorWithRequestError:(NSError *)requestError
+                           responseBody:(NSString *)body
+                          defaultStatus:(NSString *)defaultStatus {
+  // If the error is from NSURLRequest itself, then just return that. Chances are: it's a timoeut.
+  if (requestError) {
+    return @{
+        kServingRequestErrorStatus: @"request_error",
+        kServingRequestErrorStatus: @"Something went wrong with the request to the remote server; "
+                                    @"check the error object (in this dictionary) for details.",
+        kServingRequestErrorObject: requestError
+    };
+  }
+
   NSDictionary *error = [NSJSONSerialization JSONObjectWithData:
       [body dataUsingEncoding:NSUTF8StringEncoding]
                                                         options:kNilOptions

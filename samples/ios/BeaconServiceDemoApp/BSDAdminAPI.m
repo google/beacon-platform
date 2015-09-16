@@ -29,6 +29,7 @@ NSString *const kEddystoneStabilityRoving = @"ROVING";
 
 NSString *const kRequestErrorStatus = @"error_status";
 NSString *const kRequestErrorMessage = @"error_message";
+NSString *const kRequestErrorObject = @"error_details_object";
 
 NSString *const kRequestErrorOther = @"other_error_see_requestError_object";
 NSString *const kRequestErrorUnknown = @"unknown_error";
@@ -141,7 +142,8 @@ NSString* URLEncodeString(NSString *string) {
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
-            error = [BSDAdminAPI errorWithResponseBody:response
+            error = [BSDAdminAPI errorWithRequestError:requestError
+                                          responseBody:response
                                          defaultStatus:kRequestErrorModifyAttachmentNotYours];
         }
 
@@ -179,7 +181,8 @@ NSString* URLEncodeString(NSString *string) {
         NSDictionary *error = nil;
 
         if (httpResponseCode != 200) {
-            error = [BSDAdminAPI errorWithResponseBody:response
+            error = [BSDAdminAPI errorWithRequestError:requestError
+                                          responseBody:response
                                          defaultStatus:kRequestErrorModifyAttachmentNotYours];
         }
         
@@ -225,7 +228,8 @@ NSString* URLEncodeString(NSString *string) {
             num_deleted = [results[@"numDeleted"] intValue];
           }
         } else {
-          error = [BSDAdminAPI errorWithResponseBody:response
+          error = [BSDAdminAPI errorWithRequestError:requestError
+                                        responseBody:response
                                        defaultStatus:kRequestErrorModifyAttachmentNotYours];
         }
 
@@ -258,7 +262,9 @@ NSString* URLEncodeString(NSString *string) {
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
-          error = [BSDAdminAPI errorWithResponseBody:response defaultStatus:kRequestErrorUnknown];
+          error = [BSDAdminAPI errorWithRequestError:requestError
+                                        responseBody:response
+                                       defaultStatus:kRequestErrorUnknown];
         }
 
         completionHandler(results, error);
@@ -296,7 +302,8 @@ NSString* URLEncodeString(NSString *string) {
             attachments = @[];
           }
         } else {
-          error = [BSDAdminAPI errorWithResponseBody:response
+          error = [BSDAdminAPI errorWithRequestError:requestError
+                                        responseBody:response
                                        defaultStatus:kRequestErrorNotRegistered];
         }
 
@@ -405,7 +412,8 @@ NSString* URLEncodeString(NSString *string) {
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
-          error = [BSDAdminAPI errorWithResponseBody:response
+          error = [BSDAdminAPI errorWithRequestError:requestError
+                                        responseBody:response
                                        defaultStatus:kRequestErrorUnknown];
         }
 
@@ -453,7 +461,8 @@ NSString* URLEncodeString(NSString *string) {
       ^(NSInteger httpResponseCode, NSString *response, NSError *requestError) {
         NSDictionary *error = nil;
         if (httpResponseCode != 200) {
-          error = [BSDAdminAPI errorWithResponseBody:response
+          error = [BSDAdminAPI errorWithRequestError:requestError
+                                        responseBody:response
                                        defaultStatus:kRequestErrorNotRegistered];
         }
 
@@ -482,7 +491,8 @@ NSString* URLEncodeString(NSString *string) {
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
-          error = [BSDAdminAPI errorWithResponseBody:response
+          error = [BSDAdminAPI errorWithRequestError:requestError
+                                        responseBody:response
                                        defaultStatus:kRequestErrorNotRegistered];
         }
 
@@ -524,7 +534,8 @@ NSString* URLEncodeString(NSString *string) {
                                                     options:kNilOptions
                                                       error:NULL];
         } else {
-          error = [BSDAdminAPI errorWithResponseBody:response
+          error = [BSDAdminAPI errorWithRequestError:requestError
+                                        responseBody:response
                                        defaultStatus:kRequestErrorNotRegistered];
         }
 
@@ -586,7 +597,19 @@ NSString* URLEncodeString(NSString *string) {
   return [kServerPath stringByAppendingString: queryPath];
 }
 
-+ (NSDictionary *)errorWithResponseBody:(NSString *)body defaultStatus:(NSString *)defaultStatus {
++ (NSDictionary *)errorWithRequestError:(NSError *)requestError
+                           responseBody:(NSString *)body
+                          defaultStatus:(NSString *)defaultStatus {
+  // If the error is from NSURLRequest itself, then just return that. Chances are: it's a timoeut.
+  if (requestError) {
+    return @{
+        kRequestErrorStatus: @"request_error",
+        kRequestErrorStatus: @"Something went wrong with the request to the remote server; "
+                             @"check the error object (in this dictionary) for details.",
+        kRequestErrorObject: requestError
+    };
+  }
+
   NSDictionary *error = [NSJSONSerialization JSONObjectWithData:
       [body dataUsingEncoding:NSUTF8StringEncoding]
                                                     options:kNilOptions
