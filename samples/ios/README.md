@@ -23,8 +23,8 @@ CocoaPod based and quite easy to get running.
         pod install
         open BeaconServiceDemoApp.xcworkspace/
 
-	Don't try to build or run yet — it won't compile. We need to add a couple
-  of _.plist_ files first.
+	Don't try to build or run yet — it won't compile. We need to add a
+  couple of _.plist_ files first.
 
 	(Do NOT open the _.xcodeproj/_, only use the _.xcworkspace/_ !!)
 
@@ -38,7 +38,8 @@ CocoaPod based and quite easy to get running.
     * Google Places API for iOS.
 
 1. On the left of the Developers Console, click on "*APIs & auth*", and then on
-   "*Credentials*". Press "*Create new Key*" to create a Public API access key.
+   "*Credentials*". Press the "*Add Credentials*" button, then "*API key*" to
+   create a Public API access key.
    1. Choose '*iOS Key*'.
    2. In the box where you specify acceptable bundle IDs, you can choose to
         either specify `com.google.sample.BeaconServiceDemoApp`, or just leave
