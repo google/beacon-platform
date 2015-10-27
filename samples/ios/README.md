@@ -26,10 +26,17 @@ CocoaPod based and quite easy to get running.
 	Don't try to build or run yet — it won't compile. We need to add a
   couple of _.plist_ files first.
 
-	(Do NOT open the _.xcodeproj/_, only use the _.xcworkspace/_ !!)
+	(Do NOT open the _.xcodeproj/_, only **use the _.xcworkspace/_** !!)
 
 1. Go to Google API Cloud Developer Console thingie,
-   [console.developers.google.com](https://console.developers.google.com)
+   [console.developers.google.com](https://console.developers.google.com).
+   Note that these instructions assume you're still using the Developers
+   Console without the material design ≣ at the top left. If you're on the
+   newer console, things will be in slightly different places -- use the ≣
+   menu to go to "API Manager" and look for the Overview page (adding APIs)
+   or Credentials page (for managing credentials). We'll update these
+   instructions as soon as the new console comes out of beta.
+
 1. Create a new project (via the dropdown at the top). Enable the following
    APIs (on the left side, click '*APIs & auth*', then '*APIs*'):
 
