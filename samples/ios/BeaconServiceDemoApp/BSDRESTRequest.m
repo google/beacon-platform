@@ -52,28 +52,13 @@ static const int kRequestTimeout = 15; // seconds
         NSLog(@"response: %@", response);
         NSLog(@"error: %@", error);
 
-        // Little bit of defensive coding here just in case.
         if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
           completionHandler(((NSHTTPURLResponse *)response).statusCode,
                             contents,
                             error);
-        } else if (response) {
-          NSLog(@"ERROR: response is not NSHTTPURLResponse!");
-          NSString *bundle_identifier =
-          [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIdentifier"];
-          NSString *class_name = NSStringFromClass([response class]);
-          NSError *oops = [NSError errorWithDomain:bundle_identifier
-                                              code:-1
-                                          userInfo:@{ @"class_name" : class_name }];
-          completionHandler(-1, nil, oops);
         } else {
           NSLog(@"NSURLSession rejected this request");
-          NSString *bundle_identifier =
-          [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIdentifier"];
-          NSError *oops = [NSError errorWithDomain:bundle_identifier
-                                              code:-1
-                                          userInfo:@{ @"error_obj" : error }];
-          completionHandler(-1, nil, oops);
+          completionHandler(-1, nil, error);
         }
       }
   ];

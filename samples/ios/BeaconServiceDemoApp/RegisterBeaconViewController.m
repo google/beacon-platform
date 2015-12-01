@@ -185,7 +185,7 @@ NSString *GetNamespacedType(NSString *namespacedType) {
       cell.beaconType = _beaconData[@"advertisedId"][@"type"];
       if (_beaconData[@"placeId"]) {
         cell.beaconLocation = @{ @"placeId" : _beaconData[@"placeId"] };
-      } else {
+      } else if (_beaconData[@"latLng"]) {
         cell.beaconLocation = @{ @"latLng" : _beaconData[@"latLng"] };
       }
 
