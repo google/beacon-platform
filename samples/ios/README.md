@@ -95,7 +95,18 @@ CocoaPod based and quite easy to get running.
         GoogleService-Info.plist file
         (i.e. `com.googleusercontent.apps.2384234-35892859asdfashdoaiusdasf`)
 
-1. (OPTIONAL, BUT *VERY* COOL). One of the best ways to make sure that
+1. XCode 7 users only: Cocoa has a new security model for URLs within your
+   application, so we have to add some lines to the _Info.plist_ file to make
+   sure that Google SignIn can open the URLs it needs to. You need to add the
+   following to your Info.plist:
+
+        <key>LSApplicationQueriesSchemes</key>
+        <array>
+           <string>com.google.sample.beaconservicedemoapp</string>
+           <string>YOUR REVERSE CLIENT ID (com.googlusercontent.BLAH)</string>
+        </array>
+
+1. (Optional, but *very* cool). One of the best ways to make sure that
    everything is running properly is to run this app in the simulator. Since
    the simulator doesn't support Bluetooth scanning, we can, instead, have the
    app "see" some fake Eddystone devices when you click "*Scan*". To do this,
