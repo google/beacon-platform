@@ -41,6 +41,7 @@ CocoaPod based and quite easy to get running.
    APIs (on the left side, click '*APIs & auth*', then '*APIs*'):
 
     * Google Proximity Beacon API (*not* Proximity Pairing).
+      * note that you have to search for this API; it's not included in the default selection list
     * Google Maps SDK for iOS.
     * Google Places API for iOS.
 
