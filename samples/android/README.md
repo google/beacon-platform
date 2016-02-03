@@ -23,7 +23,7 @@ Enumerated in the app's [build.gradle](BeaconServiceDemoApp/app/build.gradle), w
 
 - [Android 5.1](http://developer.android.com/about/versions/lollipop.html)
 - [Google Play Services](https://developers.google.com/android/guides/overview) (for account management and authorization utilities)
-- [Volley](https://developer.android.com/training/volley/index.html) (Async HTTP library)
+- [OkHttp](http://square.github.io/okhttp/) (Async HTTP library)
 - [Joda-Time](http://www.joda.org/joda-time/)
 
 If you use Android Studio these dependencies are managed automatically for you. (When you first import the project you'll be asked to sync the relevant modules from the SDK manager.)
