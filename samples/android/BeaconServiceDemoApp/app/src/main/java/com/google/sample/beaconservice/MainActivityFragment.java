@@ -76,10 +76,10 @@ public class MainActivityFragment extends Fragment {
 
   // An aggressive scan for nearby devices that reports immediately.
   private static final ScanSettings SCAN_SETTINGS =
-    new ScanSettings.Builder().
-      setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-      .setReportDelay(0)
-      .build();
+          new ScanSettings.Builder().
+                  setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                  .setReportDelay(0)
+                  .build();
 
   // The Eddystone-UID frame type byte.
   // See https://github.com/google/eddystone for more information.
@@ -87,12 +87,12 @@ public class MainActivityFragment extends Fragment {
 
   // The Eddystone Service UUID, 0xFEAA.
   private static final ParcelUuid EDDYSTONE_SERVICE_UUID =
-    ParcelUuid.fromString("0000FEAA-0000-1000-8000-00805F9B34FB");
+          ParcelUuid.fromString("0000FEAA-0000-1000-8000-00805F9B34FB");
 
   // A filter that scans only for devices with the Eddystone Service UUID.
   private static final ScanFilter EDDYSTONE_SCAN_FILTER = new ScanFilter.Builder()
-    .setServiceUuid(EDDYSTONE_SERVICE_UUID)
-    .build();
+          .setServiceUuid(EDDYSTONE_SERVICE_UUID)
+          .build();
 
   private static final List<ScanFilter> SCAN_FILTERS = buildScanFilters();
 
@@ -230,7 +230,7 @@ public class MainActivityFragment extends Fragment {
 
   private void createScanner() {
     BluetoothManager btManager =
-      (BluetoothManager)getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
+            (BluetoothManager)getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
     BluetoothAdapter btAdapter = btManager.getAdapter();
     if (btAdapter == null || !btAdapter.isEnabled()) {
       Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -245,6 +245,19 @@ public class MainActivityFragment extends Fragment {
   }
 
   @Override
+  public void onResume() {
+    super.onResume();
+
+    // There could be multiple instances when we need to handle 'UserRecoverableAuthExceptions'.
+    // (i.e to updated GMS, to re-login, for permission to use the proximity beacon api)
+    // So run this check every time another activity has finished running.
+    String userName;
+    if ((userName = getActivity().getSharedPreferences(Constants.PREFS_NAME, 0).getString("accountName", "")) != "") {
+      new AuthorizedServiceTask(getActivity(), userName).execute();
+    }
+  }
+
+  @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     if (requestCode == Constants.REQUEST_CODE_PICK_ACCOUNT) {
@@ -255,10 +268,6 @@ public class MainActivityFragment extends Fragment {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("accountName", name);
         editor.apply();
-        // The first time the account tries to contact the beacon service we'll pop a dialog
-        // asking the user to authorize our activity. Ensure that's handled cleanly here, rather
-        // than when the scan tries to fetch the status of every beacon within range.
-        new AuthorizedServiceTask(getActivity(), name).execute();
       }
       else if (resultCode == Activity.RESULT_CANCELED) {
         // The account picker dialog closed without selecting an account.
@@ -294,7 +303,7 @@ public class MainActivityFragment extends Fragment {
         arrayAdapter.clear();
         scanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
         Log.i(TAG, "starting scan");
-
+        client = new ProximityBeaconImpl(getActivity(), accountNameView.getText().toString());
         CountDownTimer countDownTimer = new CountDownTimer(SCAN_TIME_MILLIS, 100) {
           @Override
           public void onTick(long millisUntilFinished) {
@@ -345,13 +354,13 @@ public class MainActivityFragment extends Fragment {
         Beacon beacon = arrayAdapter.getItem(position);
         if (beacon.status.equals(Beacon.NOT_AUTHORIZED)) {
           new AlertDialog.Builder(getActivity()).setTitle("Not Authorized")
-              .setMessage("You don't have permission to view the details of this beacon")
-              .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                  dialog.dismiss();
-                }
-              }).show();
+                  .setMessage("You don't have permission to view the details of this beacon")
+                  .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                      dialog.dismiss();
+                    }
+                  }).show();
           return;
         }
         if (beacon.status.equals(Beacon.STATUS_UNSPECIFIED)) {
@@ -363,20 +372,19 @@ public class MainActivityFragment extends Fragment {
         ManageBeaconFragment fragment = new ManageBeaconFragment();
         fragment.setArguments(bundle);
         getFragmentManager()
-            .beginTransaction()
-            .replace(R.id.container, fragment)
-            .addToBackStack(TAG)
-            .commit();
+                .beginTransaction()
+                .replace(R.id.container, fragment)
+                .addToBackStack(TAG)
+                .commit();
       }
     });
-    client = new ProximityBeaconImpl(getActivity(), accountNameView.getText().toString());
     return rootView;
   }
 
   private void pickUserAccount() {
     String[] accountTypes = new String[]{"com.google"};
     Intent intent = AccountPicker.newChooseAccountIntent(
-      null, null, accountTypes, false, null, null, null, null);
+            null, null, accountTypes, false, null, null, null, null);
     startActivityForResult(intent, Constants.REQUEST_CODE_PICK_ACCOUNT);
   }
 }
