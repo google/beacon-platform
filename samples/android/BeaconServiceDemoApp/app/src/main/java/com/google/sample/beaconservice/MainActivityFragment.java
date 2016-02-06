@@ -230,7 +230,7 @@ public class MainActivityFragment extends Fragment {
 
   private void createScanner() {
     BluetoothManager btManager =
-     (BluetoothManager)getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
+      (BluetoothManager)getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
     BluetoothAdapter btAdapter = btManager.getAdapter();
     if (btAdapter == null || !btAdapter.isEnabled()) {
       Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
