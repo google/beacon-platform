@@ -247,12 +247,11 @@ public class MainActivityFragment extends Fragment {
   @Override
   public void onResume() {
     super.onResume();
-
-    // There could be multiple instances when we need to handle 'UserRecoverableAuthExceptions'.
-    // (i.e to updated GMS, to re-login, for permission to use the proximity beacon api)
-    // So run this check every time another activity has finished running.
-    String accountName;
-    if ((accountName = getActivity().getSharedPreferences(Constants.PREFS_NAME, 0).getString("accountName", "")) != "") {
+    // There could be multiple instances when we need to handle a UserRecoverableAuthException
+    // from GMS. Run this check every time another activity has finished running.
+    String accountName = getActivity().getSharedPreferences(Constants.PREFS_NAME, 0)
+        .getString("accountName", "");
+    if (!accountName.equals("")) {
       new AuthorizedServiceTask(getActivity(), accountName).execute();
     }
   }
