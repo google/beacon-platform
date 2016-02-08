@@ -245,6 +245,19 @@ public class MainActivityFragment extends Fragment {
   }
 
   @Override
+  public void onResume() {
+    super.onResume();
+
+    // There could be multiple instances when we need to handle 'UserRecoverableAuthExceptions'.
+    // (i.e to updated GMS, to re-login, for permission to use the proximity beacon api)
+    // So run this check every time another activity has finished running.
+    String accountName;
+    if ((accountName = getActivity().getSharedPreferences(Constants.PREFS_NAME, 0).getString("accountName", "")) != "") {
+      new AuthorizedServiceTask(getActivity(), accountName).execute();
+    }
+  }
+
+  @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     if (requestCode == Constants.REQUEST_CODE_PICK_ACCOUNT) {
@@ -255,10 +268,6 @@ public class MainActivityFragment extends Fragment {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("accountName", name);
         editor.apply();
-        // The first time the account tries to contact the beacon service we'll pop a dialog
-        // asking the user to authorize our activity. Ensure that's handled cleanly here, rather
-        // than when the scan tries to fetch the status of every beacon within range.
-        new AuthorizedServiceTask(getActivity(), name).execute();
       }
       else if (resultCode == Activity.RESULT_CANCELED) {
         // The account picker dialog closed without selecting an account.
@@ -294,7 +303,7 @@ public class MainActivityFragment extends Fragment {
         arrayAdapter.clear();
         scanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
         Log.i(TAG, "starting scan");
-
+        client = new ProximityBeaconImpl(getActivity(), accountNameView.getText().toString());
         CountDownTimer countDownTimer = new CountDownTimer(SCAN_TIME_MILLIS, 100) {
           @Override
           public void onTick(long millisUntilFinished) {
@@ -369,7 +378,6 @@ public class MainActivityFragment extends Fragment {
             .commit();
       }
     });
-    client = new ProximityBeaconImpl(getActivity(), accountNameView.getText().toString());
     return rootView;
   }
 
