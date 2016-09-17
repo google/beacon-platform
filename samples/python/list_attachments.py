@@ -23,25 +23,37 @@ import json
 def main():
     parser = argparse.ArgumentParser(description='Lists known attachments for this beacon/project.')
     parser.add_argument('creds',
+                        nargs='?',
                         help='Path to JSON file containing service account credentials authorized to call the Google Proximity Beacon API')
-    parser.add_argument('beacon_name', nargs='?',
+    parser.add_argument('--beacon-name',
+                        required=False,
                         help='Optional beacon name to list attachments for. Otherwise, lists all attachments for all beacons under this project.')
+    parser.add_argument('--project-id',
+                        required=False,
+                        help='')
+    parser.add_argument('--access-token',
+                        required=False,
+                        help='')
 
     args = parser.parse_args()
+    pb_client = None
 
-    creds = args.creds
-    pb_client = pbapi.build_client_from_json(creds)
+    if args.creds is not None:
+      pb_client = pbapi.build_client_from_json(args.creds)
+    elif args.access_token is not None:
+      pb_client = pbapi.build_client_from_access_token(args.access_token)
+    else:
+      print('[ERROR] No usable access credentials specified. Cannot create API client.')
+      exit(1)
 
-    beacon_name = args.beacon_name
-
-    if beacon_name is None:
+    if args.beacon_name is None:
         beacons = pb_client.list_beacons()
         beacon_names = map(lambda b: b['beaconName'], beacons)
     else:
-        beacon_names = [beacon_name]
+        beacon_names = [args.beacon_name]
 
     for beacon in beacon_names:
-        attachments = pb_client.list_attachments(beacon, '*/*')
+        attachments = pb_client.list_attachments(beacon, '*/*', args.project_id)
         print("Attachments for beacon '%s':" % beacon)
 
         if attachments is not None:
