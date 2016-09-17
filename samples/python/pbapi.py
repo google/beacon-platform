@@ -23,6 +23,7 @@ some of the common functions and a starting point for building something greater
 import json
 import base64
 from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client.client import AccessTokenCredentials
 from httplib2 import Http
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -37,6 +38,12 @@ PROXIMITY_API_NAME = 'proximitybeacon'
 PROXIMITY_API_VERSION = 'v1beta1'
 PROXIMITY_API_SCOPE = 'https://www.googleapis.com/auth/userlocation.beacon.registry'
 
+def build_client_from_access_token(token):
+    """
+    Creates and returns a PB API client using a raw access token.
+    """
+    client = PbApi()
+    return client.build_from_access_token(token)
 
 def build_client_from_json(creds):
     """
@@ -76,6 +83,28 @@ class PbApi(object):
         """
         if client is not None:
             self._client = client
+
+    def build_from_access_token(self, access_token):
+        """
+        Instantiates the REST API client for the Proximity API. Full PyDoc for this
+        client is available here: https://developers.google.com/resources/api-libraries/documentation/proximitybeacon/v1beta1/python/latest/index.html
+
+        Args:
+            access_token:
+                a valid access token for the Proximity API.
+
+        Returns:
+            self, with a ready-to-use PB API client.
+        """
+        if self._client is not None:
+            return self._client
+
+        credentials = AccessTokenCredentials(access_token, 'python-api-client/1.0')
+
+        http_auth = credentials.authorize(Http())
+        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION, http=http_auth)
+
+        return self
 
     def build_from_json(self, json_credentials):
         """
@@ -132,7 +161,7 @@ class PbApi(object):
         """
         return self._client
 
-    def list_beacons(self):
+    def list_beacons(self, project_id):
         """
         Get all beacons registered with this client.
 
@@ -140,8 +169,13 @@ class PbApi(object):
             List of objects representing the beacons. For a description of all
             fields, see https://developers.google.com/beacons/proximity/reference/rest/v1beta1/beacons#Beacon
         """
-        request = self._client.beacons() \
-            .list()
+        request = None
+        if project_id is None:
+          request = self._client.beacons() \
+              .list()
+        else:
+          request = self._client.beacons() \
+              .list(projectId=project_id)
 
         beacons = []
         next_page_token = None
@@ -168,7 +202,7 @@ class PbApi(object):
 
         return beacons
 
-    def register_beacon(self, beacon_json):
+    def register_beacon(self, beacon_json, project_id):
         """
         Registers a beacon with the given data. This method will fail if the beacon
         already exists. Example JSON for a beacon is as follows (not all fields are required):
@@ -216,9 +250,15 @@ class PbApi(object):
             raise ValueError('Expected input to be json str with, at minimum, advertisedId key')
 
         try:
-            response = self._client.beacons() \
-                .register(body=beacon_json) \
-                .execute()
+            request = None
+            if project_id is not None:
+                request = self._client.beacons() \
+                    .register(body=beacon_json, projectId=project_id)
+            else:
+                request = self._client.beacons() \
+                    .register(body=beacon_json)
+
+            response = request.execute()
         except HttpError, err:
             import pprint
             pprint.pprint(err.resp)
@@ -246,7 +286,14 @@ class PbApi(object):
 
         return response
 
-    def add_attachment(self, beacon_name, namespaced_type, data):
+    def delete_beacon(self, beacon_name):
+        response = self._client.beacons() \
+            .delete(beaconName=beacon_name) \
+            .execute()
+
+        return response
+
+    def add_attachment(self, beacon_name, namespaced_type, data, project):
         """
         Adds an attachment to the specified beacon with the given namespace/type and
         data.
@@ -263,6 +310,8 @@ class PbApi(object):
                 Arbitrary String representing the content of the attachment. This
                 will be base64 encoded. *Should not contain namespace, attachment
                 name, or anything other than the "body" of your attachment.
+            project (Optional): 
+                Which project this beacon is part of.
 
         Returns:
             The attachment object as stored by the Proximity API. Current is JSON
@@ -275,10 +324,17 @@ class PbApi(object):
         # these are left off and generated server-side by the API.
         request_body = {'data': encoded_data, 'namespaced_type': namespaced_type}
 
-        response = self._client.beacons() \
-            .attachments() \
-            .create(beaconName=beacon_name, body=request_body) \
-            .execute()
+        request = None
+        if project is None:
+          request = self._client.beacons() \
+              .attachments() \
+              .create(beaconName=beacon_name, body=request_body)
+        else:
+          request = self._client.beacons() \
+              .attachments() \
+              .create(beaconName=beacon_name, body=request_body, projectId=project)
+
+        response = request.execute()
 
         if DEBUG:
             print json.dumps(response, sort_keys=True, indent=4)
@@ -306,7 +362,7 @@ class PbApi(object):
             .delete(attachmentName=attachment_name) \
             .execute()
 
-    def list_attachments(self, beacon_name, namespaced_type='*/*'):
+    def list_attachments(self, beacon_name, namespaced_type='*/*', project=None):
         """
         Retrieves the attachments, still base64 encoded, for the given beacon and namespace/type.
 
@@ -320,10 +376,17 @@ class PbApi(object):
             List of attachments. Each item is json with the keys: attachmentName,
             data, namespaced_type.
         """
-        attachments = self._client.beacons() \
-            .attachments() \
-            .list(beaconName=beacon_name, namespacedType=namespaced_type) \
-            .execute()
+        requets = None
+        if project is None:
+          request = self._client.beacons() \
+              .attachments() \
+              .list(beaconName=beacon_name, namespacedType=namespaced_type)
+        else:
+          request = self._client.beacons() \
+              .attachments() \
+              .list(beaconName=beacon_name, namespacedType=namespaced_type, projectId=project)
+
+        attachments = request.execute()
 
         if DEBUG:
             print json.dumps(attachments, sort_keys=True, indent=4)
