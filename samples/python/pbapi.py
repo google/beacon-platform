@@ -239,8 +239,8 @@ class PbApi(object):
                                               prog='register-beacon')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that will own the beacon')
-        args_parser.add_argument('--ibeacon-props',
-                                 action='store_true', default=True,
+        args_parser.add_argument('--no-ibeacon-props',
+                                 action='store_false', dest='ibeacon_props',
                                  help='If beacon.advertisedId.type is IBEACON, parse out the UUID, major, minor IDs ' +
                                       'and create matching ibeacon_ properties for each.')
         args_parser.add_argument('--print-results',
@@ -250,6 +250,7 @@ class PbApi(object):
                                       help='Path to a plain-text JSON file containing the beacon\'s description')
         beacon_arg_group.add_argument('--beacon-json',
                                       help='JSON string representing the beacon')
+        args_parser.set_defaults(ibeacon_props=True)
 
         args = args_parser.parse_args(arguments)
 

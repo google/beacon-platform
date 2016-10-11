@@ -91,6 +91,10 @@ Note that `<id>` is expected to be already encoded [as expected by the API](http
 
     $ id='abcdef1234567890abcdef1234567890'; python -c "import binascii; import base64; print base64.b64encode(binascii.unhexlify('$id'))"
 
+If the beacon is an iBeacon `register-beacon` will decode the ID to separate out the Proximity UUID and the 
+major/minor IDs. For each of these, it will add properties to the beacon: `ibeacon_uuid`, `ibeacon_major`, and 
+`ibeacon_minor`. To turn off this feature, specify the `--no-ibeacon-props` option.
+
 #### Create an attachment
 
 Since attachments in the PBAPI have only two user-settable fields, the `create-attachment` method accepts these 
