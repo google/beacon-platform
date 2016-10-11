@@ -534,23 +534,18 @@ class PbApi(object):
             reader = csv.DictReader(csvfile)
 
             if 'place_id' not in reader.fieldnames:
-                # if place Id not in headers: create geocoder client
-                print 'creating geocoder client...'
                 if not args.maps_api_key:
-                    print '[ERROR] Maps API key needed to decode addresses to place IDs.'
+                    print('[ERROR] Maps API key needed to decode addresses to place IDs.')
                     exit(1)
 
-            # each line...
             for row in reader:
-                # get beacon ID.
                 beacon_name = None
                 try:
                     beacon_name = row['beacon_name']
                 except KeyError, err:
-                    print '[ERROR] Count not get beacon ID from file. Please ensure source file has a beacon_name key.'
+                    print('[ERROR] Count not get beacon ID from file. Please ensure source file has a beacon_name key.')
                     return
 
-                # get location
                 place_id = None
                 if 'place_id' in row:
                     place_id = row['place_id']
@@ -562,27 +557,23 @@ class PbApi(object):
                     addr = row['address']
                     place_id = self._geocoder_to_placeid(args.maps_api_key, 'address', addr)
                 else:
-                    print '[WARN] No location key found for beacon id "%s"' % beacon_name
+                    print('[WARN] No location key found for beacon id "%s"' % beacon_name)
                     continue
 
-                # Do we have a place Id yet?
                 if not place_id:
-                    print '[WARN] Not able to find place ID for beacon "{}".'.format(beacon_name) + \
-                          'Please ensure the source file includes a place_id, address, or lat/long.'
+                    print('[WARN] Not able to find place ID for beacon "{}".'.format(beacon_name) +
+                          'Please ensure the source file includes a place_id, address, or lat/long.')
                     continue
 
-                # is beacon registered already?
                 beacon = self.get_beacon(['--beacon-name', beacon_name])
                 print 'got beacon: {}'.format(beacon)
                 if not beacon:
-                    # no ... skip with warning -- we don't have enough info to register. See `pbapi.py register` instead
-                    print '[WARN] beacon "{}" is not yet registered. Please register first.'.format(beacon_name)
+                    print('[WARN] beacon "{}" is not yet registered. Please register first.'.format(beacon_name))
                     continue
                 else:
-                    # set place ID
                     beacon['placeId'] = place_id
-                    # call beacons.update.
-                    print 'Updating beacon with place id "{}"'.format(place_id)
+                    if DEBUG:
+                        print('Updating beacon with place id "{}"'.format(place_id))
                     self.update_beacon(beacon)
 
     @staticmethod
@@ -677,7 +668,6 @@ class PbApi(object):
 
         return self
 
-
     def build_from_json(self, json_credentials):
         """
         Instantiates the REST API client for the Proximity API. Full PyDoc for this
@@ -700,7 +690,6 @@ class PbApi(object):
         self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION, http=http_auth)
 
         return self
-
 
     def build_from_p12(self, p12_keyfile, client_email):
         """
