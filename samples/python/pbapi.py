@@ -24,6 +24,10 @@ import json
 import base64
 import argparse
 import urllib2
+import csv
+import uuid
+import binascii
+import pprint
 
 from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.client import AccessTokenCredentials
@@ -272,7 +276,6 @@ class PbApi(object):
             raise ValueError('Expected input to be json str with, at minimum, advertisedId key')
 
         if ad_id['type'] == 'IBEACON' and args.ibeacon_props:
-            import binascii
             raw_id = binascii.hexlify(base64.b64decode(ad_id['id']))
             ibeacon_uuid = raw_id[0:31]
             major = int(raw_id[-8:-4], 16)
@@ -288,7 +291,6 @@ class PbApi(object):
 
             response = request.execute()
         except HttpError, err:
-            import pprint
             # pprint.pprint(err.resp)
             # pprint.pprint(json.dumps(err.content, sort_keys=True, indent=2))
             error = json.loads(err.content)
@@ -530,7 +532,6 @@ class PbApi(object):
 
         beacon_location_csv = args.source_csv
 
-        import csv
         with open(beacon_location_csv) as csvfile:
             reader = csv.DictReader(csvfile)
 
@@ -639,8 +640,7 @@ class PbApi(object):
                              .format(parts[2]))
 
         try:
-            from uuid import UUID
-            attach_id = UUID(parts[3], version=4)
+            attach_id = uuid.UUID(parts[3], version=4)
         except ValueError:
             raise ValueError('Expected UUID-like string for attachment ID; instead found {}'
                              .format(parts[3]))
