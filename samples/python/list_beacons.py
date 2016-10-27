@@ -22,23 +22,33 @@ import pbapi
 def main():
     parser = argparse.ArgumentParser(description='Lists all beacon ')
     parser.add_argument('creds',
+                        nargs='?',
                         help='Path to JSON file containing service account credentials authorized to call the Google Proximity Beacon API')
     parser.add_argument('--names-only', action='store_true', help='Only output names, rather than full JSON')
+    parser.add_argument('--project-id', help='Project ID run this command on.')
+    parser.add_argument('--access-token', help='OAuth Access token to use. Incompatible with specifying creds.')
     args = parser.parse_args()
 
-    creds = args.creds
-    pb_client = pbapi.build_client_from_json(creds)
-        
-    beacons = pb_client.list_beacons()
+    project = args.project_id
 
-    if args.names_only:
-        beacon_names = map(lambda b: b['beaconName'], beacons)
-        for beacon in beacon_names:
-            print(beacon)
+    pb_client = None
+    if args.creds is not None:
+      pb_client = pbapi.build_client_from_json(args.creds)
+    elif args.access_token is not None:
+      pb_client = pbapi.build_client_from_access_token(args.access_token)
     else:
-        for beacon in beacons:
+      print('[ERROR] No usable access credentials specified. Cannot create API client.')
+      exit(1)
+        
+    beacons = pb_client.list_beacons(project=args.project_id, names_only=args.names_only)
+
+    for beacon in beacons:
+        if type(beacon) is dict:
             print(json.dumps(beacon))
-    
+        else:
+            print(beacon)
+
+
 if __name__ == "__main__":
     main()
 
