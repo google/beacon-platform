@@ -40,7 +40,7 @@ DEBUG = False
 PROXIMITY_API_NAME = 'proximitybeacon'
 PROXIMITY_API_VERSION = 'v1beta1'
 PROXIMITY_API_SCOPE = 'https://www.googleapis.com/auth/userlocation.beacon.registry'
-
+DISCOVERY_URI = 'https://{api}.googleapis.com/$discovery/rest?version={apiVersion}'
 
 def build_client_from_access_token(token):
     """
@@ -665,7 +665,10 @@ class PbApi(object):
         credentials = AccessTokenCredentials(access_token, 'python-api-client/1.0')
 
         http_auth = credentials.authorize(Http())
-        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION, http=http_auth)
+        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION,
+                             http=http_auth,
+                             cache_discovery=False,
+                             discoveryServiceUrl=DISCOVERY_URI)
 
         return self
 
@@ -688,7 +691,10 @@ class PbApi(object):
             json_credentials, PROXIMITY_API_SCOPE)
 
         http_auth = credentials.authorize(Http())
-        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION, http=http_auth)
+        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION,
+                             http=http_auth,
+                             cache_discovery=False,
+                             discoveryServiceUrl=DISCOVERY_URI)
 
         return self
 
@@ -713,6 +719,9 @@ class PbApi(object):
             client_email, p12_keyfile, 'notasecret', PROXIMITY_API_SCOPE)
 
         http_auth = credentials.authorize(Http())
-        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION, http=http_auth)
+        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION,
+                             http=http_auth,
+                             cache_discovery=False,
+                             discoveryServiceUrl=DISCOVERY_URI)
 
         return self
