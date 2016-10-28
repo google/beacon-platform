@@ -161,12 +161,18 @@ class PbApi(object):
         args_parser.add_argument('--names-only',
                                  action='store_true',
                                  help='Only return the names of the beacons')
+        args_parser.add_argument('--status',
+                                 help='Only return beacons with the specified status. Default: all.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
         args = args_parser.parse_args(arguments)
 
-        request = self._client.beacons() \
-            .list(projectId=args.project_id)
+        if args.status:
+            request = self._client.beacons() \
+                .list(projectId=args.project_id, q='status:{}'.format(args.status))
+        else:
+            request = self._client.beacons() \
+                .list(projectId=args.project_id)
 
         beacons = []
         next_page_token = None
