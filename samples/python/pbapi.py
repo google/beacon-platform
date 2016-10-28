@@ -124,7 +124,7 @@ class PbApi(object):
         else:
             return beacon
 
-    def update_beacon(self, beacon):
+    def update_beacon(self, beacon, project_id):
         """
         Updates the given beacon in the PB API. Note: must be a full beacon object following the read, modify, write pattern.
 
@@ -140,7 +140,7 @@ class PbApi(object):
             return
 
         return self._client.beacons() \
-            .update(beaconName=beacon['beaconName'], body=beacon) \
+            .update(beaconName=beacon['beaconName'], projectId=project_id, body=beacon) \
             .execute()
 
     def list_beacons(self, arguments):
