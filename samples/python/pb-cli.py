@@ -98,7 +98,7 @@ def handle_help(parser, args):
 
 
 def list_commands():
-    for cmd in aliases.keys():
+    for cmd in sorted(aliases.keys()):
         print cmd
 
 
