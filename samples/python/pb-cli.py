@@ -8,15 +8,16 @@ DISCOVERY_URL = 'https://www.googleapis.com/discovery/v1/apis/proximitybeacon/v1
 
 # List of commands and they methods they map to.
 aliases = {
-    'register-beacon': pbapi.PbApi.register_beacon,
+    'bulk-register': pbapi.PbApi.bulk_register,
+    'create-attachment': pbapi.PbApi.create_attachment,
+    'deactivate-beacon': pbapi.PbApi.deactivate_beacon,
+    'delete-attachment': pbapi.PbApi.delete_attachment,
+    'delete-beacon': pbapi.PbApi.delete_beacon,
+    'get-beacon': pbapi.PbApi.get_beacon,
     'list-attachments': pbapi.PbApi.list_attachments,
     'list-beacons': pbapi.PbApi.list_beacons,
-    'deactivate-beacon': pbapi.PbApi.deactivate_beacon,
+    'register-beacon': pbapi.PbApi.register_beacon,
     'set-places':  pbapi.PbApi.set_places,
-    'get-beacon': pbapi.PbApi.get_beacon,
-    'delete-beacon': pbapi.PbApi.delete_beacon,
-    'create-attachment': pbapi.PbApi.create_attachment,
-    'delete-attachment': pbapi.PbApi.delete_attachment,
 }
 
 

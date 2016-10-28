@@ -135,7 +135,83 @@ update the beacon with that place ID:
 
     $ pb-cli.py --service-account-creds ./creds.json set-places --source-csv ./beacon-places.csv --maps-api-key <API KEY>
     *snip*
+
+Note that in particularly dense locations or in cases where multiple places share the same address (e.g., malls), 
+this may not return the desired Place ID. It's recommended that you spot check these in the [Beacon Dashboard](https://developers.google.com/beacons/dashboard). 
+
+#### Bulk Register Beacons
+
+Using `pb-cli.py`, you can register a set of beacons using a single command. For example:
+
+    $ pb-cli.py --service-account-creds ./creds.json bulk-register --source-csv ./beacons.csv
     
+The input CSV file must at minimum have an ID field (i.e., the broadcast ID of the beacon), but can contain any 
+number of fields. The primary [Beacon Resource fields](https://developers.google.com/beacons/proximity/reference/rest/v1beta1/beacons#Beacon)
+are expected to be in snake_case and are individually set if available. Any remaining, unknown fields (e.g., custom 
+fields like `store_name`) are included as keys in the beacon's `properties` map.
+
+For example, suppose `beacons.csv` has the following contents:
+
+    id,latitude,longitude,indoor_level,description,tx_power
+    12345678901234567890123456789012,47.6489529,-122.3508952,1,Entry way,-40 dBm
+    abcdefabcdefabcdefabcdefabcdefab,47.6487529,-122.3509592,2,Second floor cafe,-20 dBm
+    abcdef1234567890abcdef1234567890,47.649585,-122.350420,3,Desk,-60 dBm
+
+The first beacon would be created as:
+
+```
+{
+    'beaconName': 'beacons/3!12345678901234567890123456789012',
+    'advertisedId': {
+        'id': 'EjRWeJASNFZ4kBI0VniQEg==',
+        'type': 'EDDYSTONE'
+    },
+    'status': 'ACTIVE',
+    'expectedStability': 'STABLE',
+    'latLng': {
+        'latitude': 47.6489529,
+        'longitude': -122.3508952
+    },
+    'indoorLevel': {
+        'name': '1'
+    },
+    'description': 'Entry way',
+    'properties': {
+        'tx_power': '-40 dBm'
+    }
+}
+```
+
+The `bulk-register` command can also register iBeacons. It will perform the proper encoding of the UUID, Major, and 
+Minor IDs and set these as additional properties. For example, given the following input CSV:
+
+    type,uuid,major,minor
+    IBEACON,12345678-9012-3456-7890-123456789012,111,222
+
+`bulk-register` would create the following beacon:
+
+```
+{
+    'beaconName': 'beacons/1!12345678901234567890123456789012006f00de'
+    'advertisedId': {
+        'type': 'IBEACON',
+        'id': 'EjRWeJASNFZ4kBI0VniQEgBvAN4='
+    },
+    'status': 'ACTIVE',
+    'expectedStability': 'STABLE',
+    'properties': {
+        'ibeacon_major': '111',
+        'ibeacon_uuid': '12345678901234567890123456789012',
+        'ibeacon_minor': '222'
+    }
+}
+```
+
+Finally, `bulk-register` can also make use of the same facilities as the `set-places` command. That is, by supplying 
+`--set-places` and a Google Maps API key as part of the `bulk-register` command, an address or lat/long will be 
+parsed out of the input CSV and used to look up a plausible Google Maps Place ID.
+
+See `./pb-cli.py bulk-register --help` for additional information.
 
 License
 =======

@@ -27,7 +27,6 @@ import urllib2
 import csv
 import uuid
 import binascii
-import pprint
 
 from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.client import AccessTokenCredentials
@@ -45,6 +44,7 @@ PROXIMITY_API_NAME = 'proximitybeacon'
 PROXIMITY_API_VERSION = 'v1beta1'
 PROXIMITY_API_SCOPE = 'https://www.googleapis.com/auth/userlocation.beacon.registry'
 DISCOVERY_URI = 'https://{api}.googleapis.com/$discovery/rest?version={apiVersion}'
+
 
 def build_client_from_access_token(token):
     """
@@ -283,13 +283,13 @@ class PbApi(object):
 
         if ad_id['type'] == 'IBEACON' and args.ibeacon_props:
             raw_id = binascii.hexlify(base64.b64decode(ad_id['id']))
-            ibeacon_uuid = raw_id[0:31]
+            ibeacon_uuid = raw_id[0:32]
             major = int(raw_id[-8:-4], 16)
             minor = int(raw_id[-4:], 16)
 
             beacon['properties']['ibeacon_uuid'] = str(ibeacon_uuid)
-            beacon['properties']['ibeacon_major'] = major
-            beacon['properties']['ibeacon_minor'] = minor
+            beacon['properties']['ibeacon_major'] = str(major)
+            beacon['properties']['ibeacon_minor'] = str(minor)
 
         try:
             request = self._client.beacons() \
@@ -297,8 +297,6 @@ class PbApi(object):
 
             response = request.execute()
         except HttpError, err:
-            # pprint.pprint(err.resp)
-            # pprint.pprint(json.dumps(err.content, sort_keys=True, indent=2))
             error = json.loads(err.content)
             if error['error']['status'] == 'ALREADY_EXISTS':
                 raise ValueError('Beacon with ID of "%s" already exists.' % ad_id['id'])
@@ -532,6 +530,8 @@ class PbApi(object):
         args_parser.add_argument('--maps-api-key', metavar='API_KEY',
                                  help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
                                       'the geocoder API active.')
+        args_parser.add_argument('--project-id',
+                                 help='Google developer project ID that owns the beacons')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
         args = args_parser.parse_args(arguments)
@@ -547,34 +547,23 @@ class PbApi(object):
                     exit(1)
 
             for row in reader:
-                beacon_name = None
                 try:
                     beacon_name = row['beacon_name']
-                except KeyError, err:
+                except KeyError:
                     print('[ERROR] Count not get beacon ID from file. Please ensure source file has a beacon_name key.')
                     return
 
-                place_id = None
-                if 'place_id' in row:
-                    place_id = row['place_id']
-                elif 'latitude' in row and 'longitude' in row:
-                    lat = row['latitude']
-                    lng = row['longitude']
-                    place_id = self._geocoder_to_placeid(args.maps_api_key, 'latlng', ','.join([lat, lng]))
-                elif 'address' in row:
-                    addr = row['address']
-                    place_id = self._geocoder_to_placeid(args.maps_api_key, 'address', addr)
-                else:
-                    print('[WARN] No location key found for beacon id "%s"' % beacon_name)
-                    continue
-
+                place_id = self._get_place_id(row, args.maps_api_key)
                 if not place_id:
-                    print('[WARN] Not able to find place ID for beacon "{}".'.format(beacon_name) +
-                          'Please ensure the source file includes a place_id, address, or lat/long.')
+                    print('[WARN] Not able to find place ID for beacon. Please ensure the source file includes a '
+                          'place_id, address, or lat/long.')
                     continue
 
-                beacon = self.get_beacon(['--beacon-name', beacon_name])
-                print 'got beacon: {}'.format(beacon)
+                beacon = self.get_beacon([
+                    '--beacon-name', beacon_name,
+                    '--project-id', args.project_id
+                ])
+
                 if not beacon:
                     print('[WARN] beacon "{}" is not yet registered. Please register first.'.format(beacon_name))
                     continue
@@ -582,23 +571,202 @@ class PbApi(object):
                     beacon['placeId'] = place_id
                     if DEBUG:
                         print('Updating beacon with place id "{}"'.format(place_id))
-                    self.update_beacon(beacon)
+                    self.update_beacon(beacon, args.project_id)
+
+    def bulk_register(self, arguments):
+        args_parser = argparse.ArgumentParser(description='Register beacons based on the contents of a CSV file. See '
+                                                          'README for detailed usage information.',
+                                              prog='bulk-register')
+        args_parser.add_argument('--source-csv', metavar='PATH',
+                                 required=True,
+                                 help='Path to CSV containing the beacon description. Assumes that the CSV fields '
+                                      'match the Beacon resource expected by the Proximity Beacon API itself. Any '
+                                      'additional, unrecognizable fields are added as properties. Minimum required '
+                                      'is "id." If unspecified, status is assumed to be ACTIVE, expectedStability is '
+                                      'assumed to be STABLE, and type is assumed to be EDDYSTONE.')
+        args_parser.add_argument('--type',
+                                 help='Overrides any type in the source CSV. Expected as one of EDDYSTONE or IBEACON. '
+                                      'If IBEACON, CSV must also contain uuid (or id), major, and minor fields.')
+        args_parser.add_argument('--project-id',
+                                 help='Google developer project ID that should own the beacons')
+        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
+                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
+                                      'the geocoder API active.')
+        args_parser.add_argument('--set-place',
+                                 action='store_true',
+                                 help='Also perform a lookup for this beacon\'s Google Maps Place ID')
+        args_parser.add_argument('--dry-run',
+                                 action='store_true',
+                                 help='Don\'t actually register, but builds the beacon object from source-csv.')
+        args_parser.add_argument('--print-results',
+                                 action='store_true', default=False, help='Print to stdout the result.')
+        args = args_parser.parse_args(arguments)
+
+        if args.set_place and not args.maps_api_key:
+            print('[WARN] No Maps API key found, yet looking up place requested. Creating beacons object(s) may fail.')
+
+        beacon_type = None
+        if args.type:
+            beacon_type = args.type
+
+        with open(args.source_csv) as csvfile:
+            reader = csv.DictReader(csvfile)
+
+            if 'id' not in reader.fieldnames and 'uuid' not in reader.fieldnames:
+                print('[FATAL] Beacon description must, at minimum, include an ID field (either "id" or "uuid")')
+                return
+
+            for row in reader:
+                try:
+                    if beacon_type is None and 'type' not in row:
+                        beacon_type = 'EDDYSTONE'
+                    else:
+                        beacon_type = row['type']
+                        row.pop('type')
+
+                    if beacon_type == 'IBEACON':
+                        # Construct IBEACON ID
+                        beacon_id = self._ibeacon_to_ad_id(row['uuid'], row['major'], row['minor'])
+                        row.pop('uuid')
+                        row.pop('major')
+                        row.pop('minor')
+                    else:
+                        beacon_id = self._eddystone_to_ad_id(row['id'])
+                        row.pop('id')
+
+                    beacon = {
+                        'advertisedId': {
+                            'type': beacon_type,
+                            'id': beacon_id
+                        },
+                        'expectedStability': 'STABLE',
+                        'status': 'ACTIVE',
+                        'properties': {}
+                    }
+
+                    if args.set_place:
+                        place_id = self._get_place_id(row, args.maps_api_key)
+                        if place_id is not None:
+                            beacon['placeId'] = place_id
+                    elif 'place_id' in row:
+                        beacon['placeId'] = row['place_id']
+                    row.pop('place_id', None)
+
+                    if 'status' in row:
+                        beacon['status'] = row['status']
+                        row.pop('status')
+
+                    if 'expectedStability' in row:
+                        beacon['expectedStability'] = row['expectedStability']
+                        row.pop('expectedStability')
+
+                    if 'indoorLevel' in row:
+                        beacon['indoorLevel'] = {
+                            'name': row['indoorLevel']
+                        }
+                        row.pop('indoorLevel')
+
+                    if 'latitude' in row and 'longitude' in row:
+                        beacon['latLng'] = {
+                            'latitude': row['latitude'],
+                            'longitude': row['longitude']
+                        }
+                        row.pop('latitude')
+                        row.pop('longitude')
+
+                    if 'description' in row:
+                        beacon['description'] = row['description']
+                        row.pop('description')
+
+                    # TODO ephemeralIdRegistration and provisioningKey
+
+                    for key in row:
+                        beacon['properties'][key] = row[key]
+
+                    register_args = [
+                        '--beacon-json', json.dumps(beacon)
+                    ]
+
+                    if args.project_id:
+                        register_args += ['--project-id', args.project_id]
+
+                    if args.dry_run:
+                        print('Calling register beacon with args: {}'.format(register_args))
+                    else:
+                        # TODO batch these rather than one-off call every single one
+                        self.register_beacon(register_args)
+
+                except KeyError, err:
+                    print('[FATAL] Unable to find expected key "{}" for beacon.'.format(err.message))
+                    return
+                except ValueError, err:
+                    print('[WARN] Unable to create beacon object: {}'.format(err.message))
+                    continue
 
     @staticmethod
-    def _geocoder_to_placeid(api_key, type, value):
+    def _get_place_id(beacon, maps_api_key):
+        place_id = None
+        if 'place_id' in beacon:
+            place_id = beacon['place_id']
+        elif 'latitude' in beacon and 'longitude' in beacon:
+            lat = beacon['latitude']
+            lng = beacon['longitude']
+            place_id = PbApi._geocoder_to_placeid(maps_api_key, 'latlng', ','.join([lat, lng]))
+        elif 'address' in beacon:
+            address = beacon['address']
+            place_id = PbApi._geocoder_to_placeid(maps_api_key, 'address', address)
+        else:
+            print('[WARN] No location key found for beacon "{}"'.format(json.dumps(beacon)))
+
+        return place_id
+
+    @staticmethod
+    def _ibeacon_to_ad_id(ibeacon_uuid, ibeacon_major, ibeacon_minor):
+        """
+        Converts the UUID ("Proximity UUID") and major/minor IDs of an iBeacon into a suitable Advertised ID for the
+        Proximity Beacon API.
+
+        :param ibeacon_uuid: Hex-formated UUID, eg., 77657042-dba6-4158-ba02-61e8eb89b6fb. Dashes and case optional.
+        :param ibeacon_major: major ID, in decimal
+        :param ibeacon_minor: minor ID, in decimal
+        :return: Base 64 encoding of the concatenated byte stream, suitable for PBAPI's Advertised ID.
+        """
+        beacon_id = uuid.UUID(ibeacon_uuid)
+        major = PbApi._int_to_hex(int(ibeacon_major), 2)
+        minor = PbApi._int_to_hex(int(ibeacon_minor), 2)
+        beacon_id = beacon_id.hex + major + minor
+        return base64.b64encode(binascii.unhexlify(beacon_id))
+
+    @staticmethod
+    def _eddystone_to_ad_id(eddy_id):
+        beacon_id = uuid.UUID(eddy_id)
+        return base64.b64encode(binascii.unhexlify(beacon_id.hex))
+
+    @staticmethod
+    def _int_to_hex(n, length):
+        h = '%x' % n
+        s = ('0' * (len(h) % 2) + h).zfill(length * 2)
+        return s
+
+    @staticmethod
+    def _geocoder_to_placeid(api_key, location_type, value):
         """
         Calls the Google Maps Geocoder API to lookup a place ID for a given location.
 
         Args:
             api_key: Geocoder-enabled API key
-            type: one of {address,latlng} indicating which type of lookup to perform.
+            location_type: one of {address,latlng} indicating which type of lookup to perform.
             value: Either an address or a lat/long pair.
 
         Returns:
             a place id, if found.
         """
         value = urllib2.quote(value)
-        geocode_url = 'http://maps.googleapis.com/maps/api/geocode/json?{}={}'.format(type, value)
+        geocode_url = 'https://maps.googleapis.com/maps/api/geocode/json?{}={}'.format(location_type, value)
+
+        if api_key is not None:
+            geocode_url += '&key={}'.format(api_key)
+
         req = urllib2.urlopen(geocode_url)
         response = json.loads(req.read())
 
