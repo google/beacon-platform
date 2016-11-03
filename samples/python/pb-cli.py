@@ -4,8 +4,6 @@ import pbapi
 import json
 import argparse
 
-DISCOVERY_URL = 'https://www.googleapis.com/discovery/v1/apis/proximitybeacon/v1beta1/rest'
-
 # List of commands and they methods they map to.
 aliases = {
     'bulk-register': pbapi.PbApi.bulk_register,
@@ -105,6 +103,7 @@ def list_commands():
 
 def get_discovery_doc():
     import urllib2
+    DISCOVERY_URL = 'https://proximitybeacon.googleapis.com/$discovery/rest?version=v1beta1'
     return json.loads(urllib2.urlopen(DISCOVERY_URL).read())
 
 

@@ -80,6 +80,10 @@ enabled.
     beacons/3!abcdef1234567890abcdef1234567890
     *snip*
     
+#### List beacons matching certain criteria
+
+
+    
 #### Register a beacon
 
     $ ./pb-cli.py --service-account-creds ./creds.json register-beacon --beacon-json '{"advertisedId":{"type":"EDDYSTONE","id":"<id>"},"status":"ACTIVE"}'

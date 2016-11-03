@@ -163,16 +163,38 @@ class PbApi(object):
                                  help='Only return the names of the beacons')
         args_parser.add_argument('--status',
                                  help='Only return beacons with the specified status. Default: all.')
+        args_parser.add_argument('--query', '-q',
+                                 help='Specify an arbitrary query string for the list filter. See the API reference '
+                                      'for beacons.list for a list of all options. For example: `--query '
+                                      '\'status:active property:"battery-type=CR2032"\'` This takes precedence '
+                                      'over any other filter option (e.g., --status). Should not be URL-encoded -- '
+                                      'this will be taken care of by the client.')
+        args_parser.add_argument('--property',
+                                 action='append',
+                                 help='Filter the list to contain only beacon with the given property. Must be given '
+                                      'in the form: "<key>=<value>". If given multiple times, they will be combined '
+                                      'with OR.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
         args = args_parser.parse_args(arguments)
 
-        if args.status:
-            request = self._client.beacons() \
-                .list(projectId=args.project_id, q='status:{}'.format(args.status))
-        else:
-            request = self._client.beacons() \
-                .list(projectId=args.project_id)
+        query_string = None
+        if args.query:
+            query_string = args.query
+        elif args.status or args.property:
+            if args.status:
+                query_string = 'status:{}'.format(args.status)
+            if args.property:
+                properties = map(lambda p: 'property:"{}"'.format(p), args.property)
+                property_string = ' '.join(properties)
+                if query_string:
+                    query_string += ' {}'.format(property_string)
+                else:
+                    query_string = property_string
+
+        print('Query string is: {}'.format(query_string))
+        request = self._client.beacons() \
+            .list(projectId=args.project_id, q=query_string)
 
         beacons = []
         next_page_token = None
