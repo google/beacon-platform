@@ -123,5 +123,17 @@ CocoaPod based and quite easy to get running.
 
    Give it a whirl! Generate the fake beacons, build and run in the simulator.
 
+1. If you see a linker error: library not found for -lPods`, You'll have to
+   do the following:
+   
+   1. Click on `BeaconServiceDemoApp` in the Project Explorer.
+   1. Click on the `BeaconServiceDemoApp` _target_ in the projects and targets
+      list.
+   1. Click on _Build Phases_ Across the top.
+   1. Expand "Link binary with Libraries".
+   1. Remove `libPods.a` by clicking on the `—` button below.
+
+   Your app should link fine now. This appears to be some goofiness with
+   CocoaPods. Hopefully it will get addressed soon.
 
 **Phew**, we're done!
