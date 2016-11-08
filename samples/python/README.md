@@ -18,7 +18,9 @@ Other tools for the PBAPI that have similar function include:
 This project is based around the [Python Google API client](https://developers.google.com/api-client-library/python/)
 for which you can find installation instructions [here](https://developers.google.com/api-client-library/python/start/installation).
 
-You can install the specific package versions required via `pip install -r requirements.txt`
+For all other dependencies, just run setup.py:
+
+  python setup.py install
 
 ### Credentials and Authentication
 
@@ -48,25 +50,23 @@ The client also supports these credentials in p12 format, as well as temporary O
 
 ## Running
 
-The `pb-cli.py` script wraps most of the methods into a CLI-like tool. It follows the form of:
+Once installed, the primary entry point is via the `pb-cli` command. Its arguments follow this pattern:
 
-    pb-cli.py {global opts} [command] {command-specific opts}
+    pb-cli {global opts} [command] {command-specific opts}
 
-`{global opts}` are almost exclusively around authentication. See `pb-cli.py --help` for more details, `pb-cli.py 
---list-commands` for a list of which PBAPI methods are supported, or `pb-cli.py [command] --help` for usage details on 
+`{global opts}` are almost exclusively around authentication. See `pb-cli --help` for more details, `pb-cli 
+--list-commands` for a list of which PBAPI methods are supported, or `pb-cli [command] --help` for usage details on 
 a specific method.
- 
-### Examples
 
-#### List names of all beacons owned by a service account
+### List names of all beacons owned by a service account
 
-    $ pb-cli.py --service-account-creds ./creds.json list-beacons --names-only
+    $ pb-cli --service-account-creds ./creds.json list-beacons --names-only
     beacons/3!12345678901234567890123456789012
     beacons/3!abcdefabcdefabcdefabcdefabcdefab
     beacons/3!abcdef1234567890abcdef1234567890
     *snip*
 
-#### List names of all beacons owned by a different project
+### List names of all beacons owned by a different project
 
 This scenario requires that the service account client email has been given an appropriate PBAPI IAM role in 
 `my-beacon-project`. A more common scenario is that your developer account (e.g., name@gmail.com) has been granted this 
@@ -74,15 +74,15 @@ IAM role (e.g., by joining a Google Group). In that case, substitute `--service-
 `--access-token <access token>`, using an OAuth token tied to you developer account and a projec that has the PBAPI 
 enabled.
 
-    $ pb-cli.py --service-account-creds ./creds.json list-beacons --names-only --project-id my-beacon-project
+    $ pb-cli --service-account-creds ./creds.json list-beacons --names-only --project-id my-beacon-project
     beacons/3!12345678901234567890123456789012
     beacons/3!abcdefabcdefabcdefabcdefabcdefab
     beacons/3!abcdef1234567890abcdef1234567890
     *snip*
     
-#### Register a beacon
+### Register a beacon
 
-    $ ./pb-cli.py --service-account-creds ./creds.json register-beacon --beacon-json '{"advertisedId":{"type":"EDDYSTONE","id":"<id>"},"status":"ACTIVE"}'
+    $ pb-cli --service-account-creds ./creds.json register-beacon --beacon-json '{"advertisedId":{"type":"EDDYSTONE","id":"<id>"},"status":"ACTIVE"}'
     *snip*
     
 Note that `<id>` is expected to be already encoded [as expected by the API](https://developers.google.com/beacons/proximity/reference/rest/v1beta1/AdvertisedId).
@@ -95,7 +95,7 @@ If the beacon is an iBeacon `register-beacon` will decode the ID to separate out
 major/minor IDs. For each of these, it will add properties to the beacon: `ibeacon_uuid`, `ibeacon_major`, and 
 `ibeacon_minor`. To turn off this feature, specify the `--no-ibeacon-props` option.
 
-#### Create an attachment
+### Create an attachment
 
 Since attachments in the PBAPI have only two user-settable fields, the `create-attachment` method accepts these 
 straight on the command line. A couple of important notes for `create-attachment`:
@@ -107,13 +107,13 @@ an IAM role for attachment editing in the owning project. _You may need to conta
 or escape.
 
 ```
-$ pb-cli.py --service-account-creds ./creds.json create-attachment \
+$ pb-cli --service-account-creds ./creds.json create-attachment \
     --beacon-name 'beacons/3!12345678901234567890123456789012' \
     --namespaced-type my-beacon-project/json \
     --data '{"key":"value"}'
 ```
 
-#### Look up and set place IDs for beacons
+### Look up and set place IDs for beacons
 
 The pbapi module includes a helper function for looking up a place ID and associating it with a beacon. If you 
 already have a beacon name to place ID mapping, this function can also handle the updates for you. In order to do the
@@ -133,17 +133,17 @@ For example, if we knew the lat/long for all of our beacons, we might have an in
 `set-places` will lookup the closest place to these coordinates (in this case, Google Seattle for all three), and 
 update the beacon with that place ID:
 
-    $ pb-cli.py --service-account-creds ./creds.json set-places --source-csv ./beacon-places.csv --maps-api-key <API KEY>
+    $ pb-cli --service-account-creds ./creds.json set-places --source-csv ./beacon-places.csv --maps-api-key <API KEY>
     *snip*
 
 Note that in particularly dense locations or in cases where multiple places share the same address (e.g., malls), 
 this may not return the desired Place ID. It's recommended that you spot check these in the [Beacon Dashboard](https://developers.google.com/beacons/dashboard). 
 
-#### Bulk Register Beacons
+### Bulk Register Beacons
 
-Using `pb-cli.py`, you can register a set of beacons using a single command. For example:
+Using `pb-cli`, you can register a set of beacons using a single command. For example:
 
-    $ pb-cli.py --service-account-creds ./creds.json bulk-register --source-csv ./beacons.csv
+    $ pb-cli --service-account-creds ./creds.json bulk-register --source-csv ./beacons.csv
     
 The input CSV file must at minimum have an ID field (i.e., the broadcast ID of the beacon), but can contain any 
 number of fields. The primary [Beacon Resource fields](https://developers.google.com/beacons/proximity/reference/rest/v1beta1/beacons#Beacon)
@@ -211,7 +211,7 @@ Finally, `bulk-register` can also make use of the same facilities as the `set-pl
 `--set-places` and a Google Maps API key as part of the `bulk-register` command, an address or lat/long will be 
 parsed out of the input CSV and used to look up a plausible Google Maps Place ID.
 
-See `./pb-cli.py bulk-register --help` for additional information.
+See `pb-cli bulk-register --help` for additional information.
 
 License
 =======
