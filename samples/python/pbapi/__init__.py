@@ -192,7 +192,8 @@ class PbApi(object):
                 else:
                     query_string = property_string
 
-        print('Query string is: {}'.format(query_string))
+        if DEBUG:
+            print('Query string is: {}'.format(query_string))
         request = self._client.beacons() \
             .list(projectId=args.project_id, q=query_string)
 

@@ -79,6 +79,20 @@ enabled.
     beacons/3!abcdefabcdefabcdefabcdefabcdefab
     beacons/3!abcdef1234567890abcdef1234567890
     *snip*
+
+### Filter beacon list by query
+
+The PB CLI also supports filtering beacons by the given values. Status (`--status`) and property key/values
+(`--property`) are first-class options, but you can also give arbitrary query strings as specified by the 
+[beacons.list](https://developers.google.com/beacons/proximity/reference/rest/v1beta1/beacons/list) API documentation.
+
+For example, the following will return only the active beacons:
+
+  $ pb-cli --service-account-creds ./creds.json list-beacons --status active
+
+And the following command will return the beacons that have places set in the Seattle area:
+
+  $ pb-cli --service-account-creds ./creds.json list-beacons --query 'city:"Seattle"'
     
 ### Register a beacon
 
