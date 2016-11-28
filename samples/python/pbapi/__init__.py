@@ -30,6 +30,7 @@ import binascii
 
 from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.client import AccessTokenCredentials
+from oauth2client.client import GoogleCredentials
 from httplib2 import Http
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -74,6 +75,15 @@ def build_client_from_p12(creds, client_email):
     """
     client = PbApi()
     return client.build_from_p12(creds, client_email)
+
+
+def build_client_from_app_default():
+    """
+    Creates and returns a PB API client using the environment's default authentication, typicaly
+    managed via some variation of `gcloud beta auth application-default login`
+    """
+    client = PbApi()
+    return client.build_from_app_default()
 
 
 class PbApi(object):
@@ -192,7 +202,8 @@ class PbApi(object):
                 else:
                     query_string = property_string
 
-        print('Query string is: {}'.format(query_string))
+        if DEBUG:
+            print('Query string is: {}'.format(query_string))
         request = self._client.beacons() \
             .list(projectId=args.project_id, q=query_string)
 
@@ -843,6 +854,19 @@ class PbApi(object):
 
         return
 
+    def build_from_credentials(self, credentials):
+        """
+        Builds a PB API client from the given oauth2 client credentials
+
+        :param credentials: a valid oauth2client credentials object.
+        """
+        http_auth = credentials.authorize(Http())
+        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION,
+                             http=http_auth,
+                             cache_discovery=False,
+                             discoveryServiceUrl=DISCOVERY_URI)
+        return self
+
     def build_from_access_token(self, access_token):
         """
         Instantiates the REST API client for the Proximity API. Full PyDoc for this
@@ -859,14 +883,7 @@ class PbApi(object):
             return self._client
 
         credentials = AccessTokenCredentials(access_token, 'python-api-client/1.0')
-
-        http_auth = credentials.authorize(Http())
-        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION,
-                             http=http_auth,
-                             cache_discovery=False,
-                             discoveryServiceUrl=DISCOVERY_URI)
-
-        return self
+        return self.build_from_credentials(credentials)
 
     def build_from_json(self, json_credentials):
         """
@@ -885,14 +902,7 @@ class PbApi(object):
 
         credentials = ServiceAccountCredentials.from_json_keyfile_name(
             json_credentials, PROXIMITY_API_SCOPE)
-
-        http_auth = credentials.authorize(Http())
-        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION,
-                             http=http_auth,
-                             cache_discovery=False,
-                             discoveryServiceUrl=DISCOVERY_URI)
-
-        return self
+        return self.build_from_credentials(credentials)
 
     def build_from_p12(self, p12_keyfile, client_email):
         """
@@ -913,11 +923,20 @@ class PbApi(object):
 
         credentials = ServiceAccountCredentials.from_p12_keyfile(
             client_email, p12_keyfile, 'notasecret', PROXIMITY_API_SCOPE)
+        return self.build_from_credentials(credentials)
 
-        http_auth = credentials.authorize(Http())
-        self._client = build(PROXIMITY_API_NAME, PROXIMITY_API_VERSION,
-                             http=http_auth,
-                             cache_discovery=False,
-                             discoveryServiceUrl=DISCOVERY_URI)
+    def build_from_app_default(self):
+        """
+        Instantiates the REST API client for the Proximity API. Full PyDoc for this
+        client is available here: https://developers.google.com/resources/api-libraries/documentation/proximitybeacon/v1beta1/python/latest/index.html
 
-        return self
+        Args:
+
+        Returns:
+            self, with a ready-to-use PB API client.
+        """
+        if self._client is not None:
+            return self._client
+
+        credentials = GoogleCredentials.get_application_default()
+        return self.build_from_credentials(credentials)

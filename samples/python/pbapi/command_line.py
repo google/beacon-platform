@@ -65,13 +65,12 @@ def main():
     elif args.access_token is not None:
         pb_client = pbapi.build_client_from_access_token(args.access_token)
     else:
-        # TODO: if no creds found, attempt web-based oauth flow
-        print('[ERROR] No usable access credentials specified. Cannot create API client.')
-        exit(1)
-
-    # TODO: support arbitrary calls via the discovery doc
-    # discovery = get_discovery_doc()
-    # known_commands = get_commands(discovery['resources'])
+        try:
+            pb_client = pbapi.build_client_from_app_default()
+        except Exception, err:
+            # TODO: if no creds found, attempt web-based oauth flow
+            print('[ERROR] No usable access credentials specified. Cannot create API client: {}'.format(err.message))
+            exit(1)
 
     if args.command in aliases:
         try:
@@ -99,26 +98,6 @@ def handle_help(parser, args):
 def list_commands():
     for cmd in sorted(aliases.keys()):
         print cmd
-
-
-def get_discovery_doc():
-    import urllib2
-    DISCOVERY_URL = 'https://proximitybeacon.googleapis.com/$discovery/rest?version=v1beta1'
-    return json.loads(urllib2.urlopen(DISCOVERY_URL).read())
-
-
-def get_commands(dic, cmds=None):
-    if cmds is None:
-        cmds = []
-
-    for k in dic:
-        value = dic[k]
-        if k == 'id':
-            cmds.append(value)
-        elif type(value) is dict:
-            get_commands(value, cmds)
-
-    return cmds
 
 
 if __name__ == "__main__":
