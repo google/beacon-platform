@@ -65,9 +65,12 @@ def main():
     elif args.access_token is not None:
         pb_client = pbapi.build_client_from_access_token(args.access_token)
     else:
-        # TODO: if no creds found, attempt web-based oauth flow
-        print('[ERROR] No usable access credentials specified. Cannot create API client.')
-        exit(1)
+        try:
+            pb_client = pbapi.build_client_from_app_default()
+        except Exception, err:
+            # TODO: if no creds found, attempt web-based oauth flow
+            print('[ERROR] No usable access credentials specified. Cannot create API client: {}'.format(err.message))
+            exit(1)
 
     if args.command in aliases:
         try:
