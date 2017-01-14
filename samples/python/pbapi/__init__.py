@@ -559,10 +559,7 @@ class PbApi(object):
         args_parser.add_argument('--source-csv', metavar='PATH',
                                  required=True,
                                  help='Path to CSV containing beacon,location tuples. Must contain a `beacon_name` ' +
-                                      'key and one of place_id; latitude,longitude (both); or address.')
-        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
-                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
-                                      'the geocoder API active.')
+                                      'key and a `place_id` key.')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that owns the beacons')
         args_parser.add_argument('--print-results',
@@ -575,9 +572,8 @@ class PbApi(object):
             reader = csv.DictReader(csvfile)
 
             if 'place_id' not in reader.fieldnames:
-                if not args.maps_api_key:
-                    print('[ERROR] Maps API key needed to decode addresses to place IDs.')
-                    exit(1)
+                  print('[ERROR] Input file must contain a `place_id` field!')
+                  exit(1)
 
             for row in reader:
                 try:
@@ -586,10 +582,10 @@ class PbApi(object):
                     print('[ERROR] Count not get beacon ID from file. Please ensure source file has a beacon_name key.')
                     return
 
-                place_id = self._get_place_id(row, args.maps_api_key)
+                place_id = row['place_id']
                 if not place_id:
                     print('[WARN] Not able to find place ID for beacon. Please ensure the source file includes a '
-                          'place_id, address, or lat/long.')
+                          'place_id')
                     continue
 
                 beacon = self.get_beacon([
@@ -622,25 +618,12 @@ class PbApi(object):
                                       'If IBEACON, CSV must also contain uuid (or id), major, and minor fields.')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that should own the beacons')
-        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
-                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
-                                      'the geocoder API active.')
-        args_parser.add_argument('--set-place',
-                                 action='store_true',
-                                 help='Also perform a lookup for this beacon\'s Google Maps Place ID')
         args_parser.add_argument('--dry-run',
                                  action='store_true',
                                  help='Don\'t actually register, but builds the beacon object from source-csv.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
         args = args_parser.parse_args(arguments)
-
-        if args.set_place and not args.maps_api_key:
-            print('[WARN] No Maps API key found, yet looking up place requested. Creating beacons object(s) may fail.')
-
-        beacon_type = None
-        if args.type:
-            beacon_type = args.type
 
         with open(args.source_csv) as csvfile:
             reader = csv.DictReader(csvfile)
@@ -651,7 +634,7 @@ class PbApi(object):
 
             for row in reader:
                 try:
-                    if beacon_type is None and 'type' not in row:
+                    if not args.type and 'type' not in row:
                         beacon_type = 'EDDYSTONE'
                     else:
                         beacon_type = row['type']
@@ -677,21 +660,10 @@ class PbApi(object):
                         'properties': {}
                     }
 
-                    if args.set_place:
-                        place_id = self._get_place_id(row, args.maps_api_key)
-                        if place_id is not None:
-                            beacon['placeId'] = place_id
-                    elif 'place_id' in row:
-                        beacon['placeId'] = row['place_id']
-                    row.pop('place_id', None)
-
-                    if 'status' in row:
-                        beacon['status'] = row['status']
-                        row.pop('status')
-
-                    if 'expectedStability' in row:
-                        beacon['expectedStability'] = row['expectedStability']
-                        row.pop('expectedStability')
+                    for key in ('place_id', 'status', 'expectedStability', 'description'):
+                        if key in row:
+                            beacon[self.snake_to_camel(key)] = row[key]
+                            row.pop(key)
 
                     if 'indoorLevel' in row:
                         beacon['indoorLevel'] = {
@@ -706,10 +678,6 @@ class PbApi(object):
                         }
                         row.pop('latitude')
                         row.pop('longitude')
-
-                    if 'description' in row:
-                        beacon['description'] = row['description']
-                        row.pop('description')
 
                     # TODO ephemeralIdRegistration and provisioningKey
 
@@ -735,23 +703,6 @@ class PbApi(object):
                 except ValueError, err:
                     print('[WARN] Unable to create beacon object: {}'.format(err.message))
                     continue
-
-    @staticmethod
-    def _get_place_id(beacon, maps_api_key):
-        place_id = None
-        if 'place_id' in beacon:
-            place_id = beacon['place_id']
-        elif 'latitude' in beacon and 'longitude' in beacon:
-            lat = beacon['latitude']
-            lng = beacon['longitude']
-            place_id = PbApi._geocoder_to_placeid(maps_api_key, 'latlng', ','.join([lat, lng]))
-        elif 'address' in beacon:
-            address = beacon['address']
-            place_id = PbApi._geocoder_to_placeid(maps_api_key, 'address', address)
-        else:
-            print('[WARN] No location key found for beacon "{}"'.format(json.dumps(beacon)))
-
-        return place_id
 
     @staticmethod
     def _ibeacon_to_ad_id(ibeacon_uuid, ibeacon_major, ibeacon_minor):
@@ -780,40 +731,6 @@ class PbApi(object):
         h = '%x' % n
         s = ('0' * (len(h) % 2) + h).zfill(length * 2)
         return s
-
-    @staticmethod
-    def _geocoder_to_placeid(api_key, location_type, value):
-        """
-        Calls the Google Maps Geocoder API to lookup a place ID for a given location.
-
-        Args:
-            api_key: Geocoder-enabled API key
-            location_type: one of {address,latlng} indicating which type of lookup to perform.
-            value: Either an address or a lat/long pair.
-
-        Returns:
-            a place id, if found.
-        """
-        value = urllib2.quote(value)
-        geocode_url = 'https://maps.googleapis.com/maps/api/geocode/json?{}={}'.format(location_type, value)
-
-        if api_key is not None:
-            geocode_url += '&key={}'.format(api_key)
-
-        req = urllib2.urlopen(geocode_url)
-        response = json.loads(req.read())
-
-        place_id = None
-        if response and response['status'] == 'OK':
-            results = response['results']
-            if len(results) > 0 and 'place_id' in results[0]:
-                place_id = results[0]['place_id']
-        elif 'error_message' in response:
-            print '[ERROR] Failed to call geocoder: {}'.format(response['error_message'])
-        else:
-            print '[ERROR] Failed to call geocoder: {}'.format(response['status'])
-
-        return place_id
 
     @staticmethod
     def _validate_attachment_name(name):
@@ -853,6 +770,11 @@ class PbApi(object):
                              .format(parts[3]))
 
         return
+
+    @staticmethod
+    def snake_to_camel(string):
+      components = string.split('_')
+      return components[0] + "".join(x.title() for x in components[1:])
 
     def build_from_credentials(self, credentials):
         """
@@ -940,3 +862,4 @@ class PbApi(object):
 
         credentials = GoogleCredentials.get_application_default()
         return self.build_from_credentials(credentials)
+
