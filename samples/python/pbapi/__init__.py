@@ -584,8 +584,8 @@ class PbApi(object):
 
                 place_id = row['place_id']
                 if not place_id:
-                    print('[WARN] Not able to find place ID for beacon. Please ensure the source file includes a '
-                          'place_id')
+                    print('[WARN] Not able to find place ID for beacon "{}". Please ensure the source file includes a '
+                          'place_id'.format(beacon_name))
                     continue
 
                 beacon = self.get_beacon([
