@@ -28,7 +28,6 @@ import urllib2
 import csv
 import uuid
 import binascii
-import tempfile
 import webbrowser
 
 from oauth2client.service_account import ServiceAccountCredentials
