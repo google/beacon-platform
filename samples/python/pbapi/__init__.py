@@ -27,10 +27,14 @@ import urllib2
 import csv
 import uuid
 import binascii
+import tempfile
+import webbrowser
 
 from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.client import AccessTokenCredentials
 from oauth2client.client import GoogleCredentials
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client import file as oauth2file
 from httplib2 import Http
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -45,6 +49,7 @@ PROXIMITY_API_NAME = 'proximitybeacon'
 PROXIMITY_API_VERSION = 'v1beta1'
 PROXIMITY_API_SCOPE = 'https://www.googleapis.com/auth/userlocation.beacon.registry'
 DISCOVERY_URI = 'https://{api}.googleapis.com/$discovery/rest?version={apiVersion}'
+CREDS_STORAGE = '/tmp/pbapi-creds-storage'
 
 
 def build_client_from_access_token(token):
@@ -61,6 +66,13 @@ def build_client_from_json(creds):
     """
     client = PbApi()
     return client.build_from_json(creds)
+
+def build_client_from_client_id_json(creds):
+    """
+    Creates and returns a PB API client using the path to client id secrets stored as JSON
+    """
+    client = PbApi()
+    return client.build_from_client_id_json(creds)
 
 
 def build_client_from_p12(creds, client_email):
@@ -854,6 +866,43 @@ class PbApi(object):
 
         credentials = ServiceAccountCredentials.from_json_keyfile_name(
             json_credentials, PROXIMITY_API_SCOPE)
+        return self.build_from_credentials(credentials)
+
+    def build_from_client_id_json(self, client_secret_file):
+        """
+        Instantiates the REST API client for the Proximity API given the path
+        to a client secrets JSON file.
+
+        Args:
+            client_secret_file:
+                Path to a JSON file obtained from the Google Cloud Console for
+                an "OAuth 2.0 client ID".
+
+        Returns:
+            self, with a ready-to-use PB API client.
+        
+        """
+        if self._client is not None:
+            return self._client
+        
+        storage = oauth2file.Storage(CREDS_STORAGE)
+
+        credentials = storage.get()
+        if (credentials is not None and not credentials.invalid):
+            return self.build_from_credentials(credentials)
+
+        flow = flow_from_clientsecrets(
+            client_secret_file,
+            scope='https://www.googleapis.com/auth/userlocation.beacon.registry',
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+
+        auth_uri = flow.step1_get_authorize_url()
+        webbrowser.open(auth_uri)
+    
+        auth_code = raw_input('Enter the authentication code: ')
+    
+        credentials = flow.step2_exchange(auth_code)
+        storage.put(credentials)
         return self.build_from_credentials(credentials)
 
     def build_from_p12(self, p12_keyfile, client_email):
