@@ -344,6 +344,36 @@ class PbApi(object):
         else:
             return response
 
+    def activate_beacon(self, arguments):
+        """
+        Activates a beacon.
+
+        Args:
+            arguments: list of arguments passed from CLI. Pass ['--help'] for details.
+
+        Returns:
+            Nothing
+        """
+        args_parser = argparse.ArgumentParser(description='Activates the given beacon',
+                                              prog='activate-beacon')
+        args_parser.add_argument('--project-id',
+                                 help='Google developer project ID that owns the beacon')
+        args_parser.add_argument('--beacon-name',
+                                 required=True,
+                                 help='Name of the beacon to deactivate')
+        args_parser.add_argument('--print-results',
+                                 action='store_true', default=False, help='Print to stdout the result.')
+        args = args_parser.parse_args(arguments)
+
+        response = self._client.beacons() \
+            .activate(beaconName=args.beacon_name, projectId=args.project_id) \
+            .execute()
+
+        if args.print_results:
+            print response
+        else:
+            return response
+
     def deactivate_beacon(self, arguments):
         """
         Deactivates a beacon.

@@ -8,6 +8,7 @@ import argparse
 aliases = {
     'bulk-register': pbapi.PbApi.bulk_register,
     'create-attachment': pbapi.PbApi.create_attachment,
+    'activate-beacon': pbapi.PbApi.activate_beacon,
     'deactivate-beacon': pbapi.PbApi.deactivate_beacon,
     'delete-attachment': pbapi.PbApi.delete_attachment,
     'delete-beacon': pbapi.PbApi.delete_beacon,
