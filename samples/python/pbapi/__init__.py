@@ -20,6 +20,7 @@ are not meant to be a complete solution for interacting with the service, rather
 some of the common functions and a starting point for building something greater.
 """
 
+import os
 import json
 import base64
 import argparse
@@ -884,6 +885,9 @@ class PbApi(object):
         """
         if self._client is not None:
             return self._client
+
+        if not os.path.exists(CREDS_STORAGE):
+            open(CREDS_STORAGE, 'w').close()
         
         storage = oauth2file.Storage(CREDS_STORAGE)
 
@@ -897,6 +901,9 @@ class PbApi(object):
             redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
         auth_uri = flow.step1_get_authorize_url()
+        print "Opening web browser to initiate OAuth dance."
+        print "Please copy and paste the resulting token here."
+        print "(Please ignore any error messages about 'Failed to launch GPU process'.)"
         webbrowser.open(auth_uri)
     
         auth_code = raw_input('Enter the authentication code: ')
