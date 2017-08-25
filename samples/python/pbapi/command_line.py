@@ -17,6 +17,7 @@ aliases = {
     'list-beacons': pbapi.PbApi.list_beacons,
     'register-beacon': pbapi.PbApi.register_beacon,
     'set-places':  pbapi.PbApi.set_places,
+    'set-property':  pbapi.PbApi.set_property,
 }
 
 
