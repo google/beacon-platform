@@ -43,7 +43,7 @@ from googleapiclient.errors import HttpError
 __author__ = 'afitzgibbon@google.com (Andrew Fitz Gibbon)'
 
 # Debug controls, for now, whether API responses are printed to stdout when received.
-DEBUG = False
+DEBUG = True 
 
 # Except maybe for 'API version', these shouldn't ever change.
 PROXIMITY_API_NAME = 'proximitybeacon'
@@ -227,20 +227,21 @@ class PbApi(object):
                 print 'Requesting more beacons'
             beacons_resp = request.execute()
 
-            if DEBUG:
-                print 'Current next token: {}\nNew next token: {}' \
-                    .format(next_page_token, beacons_resp['nextPageToken'])
-            if next_page_token is not None and beacons_resp['nextPageToken'] == next_page_token:
-                break
-            try: 
-                next_page_token = beacons_resp['nextPageToken']
-            except KeyError:
-                break
-
             if 'beacons' in beacons_resp:
                 if DEBUG:
                     print 'Got {} beacons: '.format(len(beacons_resp['beacons']))
                 beacons += beacons_resp['beacons']
+
+            try: 
+                if DEBUG:
+                    print 'Current next token: {}\nNew next token: {}' \
+                        .format(next_page_token, beacons_resp['nextPageToken'])
+                if next_page_token is not None and beacons_resp['nextPageToken'] == next_page_token:
+                    break
+                next_page_token = beacons_resp['nextPageToken']
+            except KeyError:
+                break
+
             request = self._client.beacons().list_next(request, beacons_resp)
 
         if DEBUG:
