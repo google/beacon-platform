@@ -764,7 +764,8 @@ class PbApi(object):
         Returns:
             Nothing.
         """
-        args_parser = argparse.ArgumentParser(description='Sets a property on a beacon.',
+        args_parser = argparse.ArgumentParser(description='Sets properties on beacons based on the'
+                                                          ' content of a CSV file.',
                                               prog='set-property')
         args_parser.add_argument('--source-csv', metavar='PATH',
                                  required=True, help='Path to the CSV file.')
