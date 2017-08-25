@@ -29,6 +29,7 @@ import csv
 import uuid
 import binascii
 import webbrowser
+import hashlib
 
 from oauth2client.service_account import ServiceAccountCredentials
 from oauth2client.client import AccessTokenCredentials
@@ -49,7 +50,7 @@ PROXIMITY_API_NAME = 'proximitybeacon'
 PROXIMITY_API_VERSION = 'v1beta1'
 PROXIMITY_API_SCOPE = 'https://www.googleapis.com/auth/userlocation.beacon.registry'
 DISCOVERY_URI = 'https://{api}.googleapis.com/$discovery/rest?version={apiVersion}'
-CREDS_STORAGE = '/tmp/pbapi-creds-storage'
+CREDS_STORAGE = '~/.pb-cli/creds'
 
 
 def build_client_from_access_token(token):
@@ -885,10 +886,16 @@ class PbApi(object):
         if self._client is not None:
             return self._client
 
-        if not os.path.exists(CREDS_STORAGE):
-            open(CREDS_STORAGE, 'w').close()
-        
-        storage = oauth2file.Storage(CREDS_STORAGE)
+        credsdir = os.path.expanduser(CREDS_STORAGE)
+        if not os.path.exists(credsdir):
+            os.makedirs(credsdir)
+
+        credsfile = credsdir + '/' + hashlib.sha1(
+            open(client_secret_file, 'r').read()).hexdigest()
+        if not os.path.exists(credsfile):
+            open(credsfile, 'w').close()
+
+        storage = oauth2file.Storage(credsfile)
 
         credentials = storage.get()
         if (credentials is not None and not credentials.invalid):
