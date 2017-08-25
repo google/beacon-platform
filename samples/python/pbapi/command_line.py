@@ -41,6 +41,8 @@ def main():
                              'needed if using an access token or a JSON service account file.')
     parser.add_argument('--access-token',
                         help='OAuth2 access token ')
+    parser.add_argument('--client-secret',
+                        help='Path to a JSON file containing oauth client ID secrets.')
 
     args, extra_args = parser.parse_known_args()
 
@@ -65,6 +67,8 @@ def main():
         pb_client = pbapi.build_client_from_json(args.service_account_creds)
     elif args.access_token is not None:
         pb_client = pbapi.build_client_from_access_token(args.access_token)
+    elif args.client_secret is not None:
+        pb_client = pbapi.build_client_from_client_id_json(args.client_secret)
     else:
         try:
             pb_client = pbapi.build_client_from_app_default()
