@@ -232,7 +232,10 @@ class PbApi(object):
                     .format(next_page_token, beacons_resp['nextPageToken'])
             if next_page_token is not None and beacons_resp['nextPageToken'] == next_page_token:
                 break
-            next_page_token = beacons_resp['nextPageToken']
+            try: 
+                next_page_token = beacons_resp['nextPageToken']
+            except KeyError:
+                break
 
             if 'beacons' in beacons_resp:
                 if DEBUG:
@@ -746,6 +749,56 @@ class PbApi(object):
                 except ValueError, err:
                     print('[WARN] Unable to create beacon object: {}'.format(err.message))
                     continue
+
+    def set_property(self, arguments):
+        """
+        Adds (or replaces) properties on beacons.
+
+        Accepts a CSV file with a beacon_name column and additional columns whose header is the
+        property name and whose values on each row are the property values.
+
+        Args:
+            arguments: list of arguments passed from CLI. Pass ['--help'] for details.
+
+        Returns:
+            Nothing.
+        """
+        args_parser = argparse.ArgumentParser(description='Sets a property on a beacon.',
+                                              prog='set-property')
+        args_parser.add_argument('--source-csv', metavar='PATH',
+                                 required=True, help='Path to the CSV file.')
+        args_parser.add_argument('--project-id',
+                                 help='Google developer project ID that owns the beacons')
+        args_parser.add_argument('--print-results',
+                                 action='store_true', default=False, help='Print to stdout the result.')
+        args = args_parser.parse_args(arguments)
+
+        beacon_location_csv = args.source_csv
+
+        with open(beacon_location_csv) as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                try:
+                    beacon_name = row['beacon_name']
+                    row.pop('beacon_name')
+                except KeyError:
+                    print('[ERROR] Could not get beacon ID from file. Please ensure source file has a beacon_name key.')
+                    return
+
+                beacon = self.get_beacon([
+                    '--beacon-name', beacon_name,
+                    '--project-id', args.project_id
+                ])
+
+                if not beacon:
+                    print('[WARN] beacon "{}" is not yet registered. Please register first.'.format(beacon_name))
+                    continue
+                else:
+                    for name, value in row.items():
+                        beacon['properties'][name] = value
+                        if DEBUG:
+                            print('Updating beacon with property "{}:{}"'.format(name, value))
+                    self.update_beacon(beacon, args.project_id)
 
     @staticmethod
     def _ibeacon_to_ad_id(ibeacon_uuid, ibeacon_major, ibeacon_minor):
