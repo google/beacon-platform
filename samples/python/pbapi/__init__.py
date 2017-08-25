@@ -43,7 +43,7 @@ from googleapiclient.errors import HttpError
 __author__ = 'afitzgibbon@google.com (Andrew Fitz Gibbon)'
 
 # Debug controls, for now, whether API responses are printed to stdout when received.
-DEBUG = True 
+DEBUG = False 
 
 # Except maybe for 'API version', these shouldn't ever change.
 PROXIMITY_API_NAME = 'proximitybeacon'
