@@ -752,7 +752,10 @@ class PbApi(object):
 
     def set_property(self, arguments):
         """
-        Given a file with beacon_id and a property name,value pair, add (or replace) the property in the beacon record.
+        Adds (or replaces) properties on beacons.
+
+        Accepts a CSV file with a beacon_name column and additional columns whose header is the
+        property name and whose values on each row are the property values.
 
         Args:
             arguments: list of arguments passed from CLI. Pass ['--help'] for details.
@@ -763,10 +766,7 @@ class PbApi(object):
         args_parser = argparse.ArgumentParser(description='Sets a property on a beacon.',
                                               prog='set-property')
         args_parser.add_argument('--source-csv', metavar='PATH',
-                                 required=True,
-                                 help='Path to CSV with a header in the form beacon_name,property_name1,'
-                                      'property_name2 and each line containing a beacon name, and '
-                                      'property values.')
+                                 required=True, help='Path to the CSV file.')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that owns the beacons')
         args_parser.add_argument('--print-results',
