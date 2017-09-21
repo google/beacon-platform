@@ -750,21 +750,23 @@ class PbApi(object):
                         row.pop('latitude')
                         row.pop('longitude')
 
-                    # maybe derive lat/lng from the center of the place
-                    if args.set_latlng_from_place and 'placeId' in beacon:
-                        self.lat_lng_from_place(beacon, args.maps_api_key)
-
                     # TODO ephemeralIdRegistration and provisioningKey
 
                     for key in row:
                         beacon['properties'][key] = row[key]
 
                     register_args = [
-                        '--beacon-json', json.dumps(beacon)
+                        '--beacon-json', json.dumps(beacon),
                     ]
 
                     if args.project_id:
                         register_args += ['--project-id', args.project_id]
+                    if args.set_latlng_from_place and args.maps_api_key:
+                        register_args += [
+                            '--set-latlng-from-place', 
+                            '--maps-api-key', args.maps_api_key
+                        ]
+
 
                     if args.dry_run:
                         print('Skipping beacause dry run. Would have registered beacon: {}'.format(register_args))
