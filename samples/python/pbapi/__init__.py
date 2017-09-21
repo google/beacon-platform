@@ -43,13 +43,14 @@ from googleapiclient.errors import HttpError
 __author__ = 'afitzgibbon@google.com (Andrew Fitz Gibbon)'
 
 # Debug controls, for now, whether API responses are printed to stdout when received.
-DEBUG = False
+DEBUG = True 
 
 # Except maybe for 'API version', these shouldn't ever change.
 PROXIMITY_API_NAME = 'proximitybeacon'
+#PROXIMITY_API_NAME = 'staging-proximitybeacon.sandbox'
 PROXIMITY_API_VERSION = 'v1beta1'
 PROXIMITY_API_SCOPE = 'https://www.googleapis.com/auth/userlocation.beacon.registry'
-DISCOVERY_URI = 'https://{api}.googleapis.com/$discovery/rest?version={apiVersion}'
+DISCOVERY_URI = 'https://{api}.googleapis.com/$discovery/rest?version={apiVersion}&key=AIzaSyC0xS9-vLR-zTNjfTxq8IwRvBbJYLytvzI'
 CREDS_STORAGE = '~/.pb-cli/creds'
 
 
@@ -305,6 +306,9 @@ class PbApi(object):
                                       'and create matching ibeacon_ properties for each.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
+        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
+                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
+                                      'the geocoder API active.')
         beacon_arg_group = args_parser.add_mutually_exclusive_group(required=True)
         beacon_arg_group.add_argument('--beacon-json-file',
                                       help='Path to a plain-text JSON file containing the beacon\'s description')
@@ -607,6 +611,9 @@ class PbApi(object):
                                  required=True,
                                  help='Path to CSV containing beacon,location tuples. Must contain a `beacon_name` ' +
                                       'key and a `place_id` key.')
+        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
+                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
+                                      'the geocoder API active.')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that owns the beacons')
         args_parser.add_argument('--print-results',
@@ -619,8 +626,8 @@ class PbApi(object):
             reader = csv.DictReader(csvfile)
 
             if 'place_id' not in reader.fieldnames:
-                  print('[ERROR] Input file must contain a `place_id` field!')
-                  exit(1)
+                print('[ERROR] Input file must contain a `place_id` field!')
+                exit(1)
 
             for row in reader:
                 try:
@@ -665,12 +672,22 @@ class PbApi(object):
                                       'If IBEACON, CSV must also contain uuid (or id), major, and minor fields.')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that should own the beacons')
+        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
+                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
+                                      'the geocoder API active.')
+        args_parser.add_argument('--set-latlng-from-place',
+                                 action='store_true',
+                                 help='Use the center of the place as the latitude and longitude of the beacon.')
         args_parser.add_argument('--dry-run',
                                  action='store_true',
                                  help='Don\'t actually register, but builds the beacon object from source-csv.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
         args = args_parser.parse_args(arguments)
+
+        if args.set_latlng_from_place and not args.maps_api_key:
+            print('[FATAL] Requested to set lat/lng from the place, but no Maps API key given.')
+            exit(1)
 
         with open(args.source_csv) as csvfile:
             reader = csv.DictReader(csvfile)
@@ -726,6 +743,10 @@ class PbApi(object):
                         row.pop('latitude')
                         row.pop('longitude')
 
+                    # maybe derive lat/lng from the center of the place
+                    if args.set_latlng_from_place and 'placeId' in beacon:
+                        self.lat_lng_from_place(beacon, args.maps_api_key)
+
                     # TODO ephemeralIdRegistration and provisioningKey
 
                     for key in row:
@@ -739,7 +760,7 @@ class PbApi(object):
                         register_args += ['--project-id', args.project_id]
 
                     if args.dry_run:
-                        print('Calling register beacon with args: {}'.format(register_args))
+                        print('Skipping beacause dry run. Would have registered beacon: {}'.format(register_args))
                     else:
                         # TODO batch these rather than one-off call every single one
                         self.register_beacon(register_args)
@@ -802,6 +823,29 @@ class PbApi(object):
                             print('Updating beacon with property "{}:{}"'.format(name, value))
                     self.update_beacon(beacon, args.project_id)
 
+    def lat_lng_from_place(self, beacon, maps_api_key):
+        """
+        Set the beacon's lat/lng to the center of the place.
+        """
+        if 'latLng' in beacon:
+            if DEBUG:
+                print('Beacon already has lat/lng, skipping so as not to erase it.')
+            return
+
+        if 'placeId' not in beacon:
+            if DEBUG:
+                print('No place_id in beacon, cannot infer its lat/lng.')
+            return
+
+        if DEBUG:
+            print('Attempting to set lat/lng based on place id {}'.format(beacon['placeId']))
+
+        lat_lng = PbApi._placeid_to_latlng(maps_api_key, beacon['placeId'])
+        if lat_lng is not None:
+               beacon['latLng'] = {'latitude': lat_lng['lat'], 'longitude': lat_lng['lng']}
+        if DEBUG:
+            print('Beacon lat/lng are: {}'.format(lat_lng))
+
     @staticmethod
     def _ibeacon_to_ad_id(ibeacon_uuid, ibeacon_major, ibeacon_minor):
         """
@@ -829,6 +873,39 @@ class PbApi(object):
         h = '%x' % n
         s = ('0' * (len(h) % 2) + h).zfill(length * 2)
         return s
+
+    @staticmethod
+    def _placeid_to_latlng(api_key, place_id):
+        """
+        Calls the Google Places API to lookup the lat/lng location of a given place.
+
+        Args:
+            api_key: Geocoder-enabled API key
+            place_id: The (string) place id for given place, e.g. "ChIJ4abvVDwbdkgRDZVFR7A6Bcc"
+
+        Returns:
+            an object e.g. {"lat":51.533241,"lng":-0.126002} if found.
+        """
+        if api_key is None or len(api_key) is 0:
+            print "[ERROR] api key is required to call places API, was [{]}.".format(api_key)
+            return
+
+        places_api_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid={}&key={}'.format(place_id, api_key)
+
+        req = urllib2.urlopen(places_api_url)
+        response = json.loads(req.read())
+
+        lat_lng = None
+        if response and response['status'] == 'OK':
+            result = response['result']
+            if result is not None and result['geometry']['location'] is not None:
+                lat_lng = result['geometry']['location']
+        elif 'error_message' in response:
+            print '[ERROR] Failed to call places api: {}'.format(response['error_message'])
+        else:
+            print '[ERROR] Failed to call places api: {}'.format(response['status'])
+
+        return lat_lng
 
     @staticmethod
     def _validate_attachment_name(name):
