@@ -757,7 +757,7 @@ class PbApi(object):
                         beacon['properties'][key] = row[key]
 
                     register_args = [
-                        '--beacon-json', json.dumps(beacon),
+                        '--beacon-json', json.dumps(beacon)
                     ]
 
                     if args.project_id:
