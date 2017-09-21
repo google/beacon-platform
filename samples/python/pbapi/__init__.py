@@ -303,6 +303,12 @@ class PbApi(object):
                                  action='store_false', dest='ibeacon_props',
                                  help='If beacon.advertisedId.type is IBEACON, parse out the UUID, major, minor IDs ' +
                                       'and create matching ibeacon_ properties for each.')
+        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
+                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
+                                      'the geocoder API active.')
+        args_parser.add_argument('--set-latlng-from-place',
+                                 action='store_true',
+                                 help='Use the center of the place as the latitude and longitude of the beacon.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
         beacon_arg_group = args_parser.add_mutually_exclusive_group(required=True)
@@ -322,6 +328,10 @@ class PbApi(object):
         else:
             raise ValueError('Expected beacon definition, either in file or string, found neither.')
 
+        if args.set_latlng_from_place and not args.maps_api_key:
+            print('[FATAL] Requested to set lat/lng from the place, but no Maps API key given.')
+            exit(1)
+
         # Perform some rudimentary input validation before sending off
         try:
             parsed_beacon = beacon
@@ -340,6 +350,10 @@ class PbApi(object):
             beacon['properties']['ibeacon_uuid'] = str(ibeacon_uuid)
             beacon['properties']['ibeacon_major'] = str(major)
             beacon['properties']['ibeacon_minor'] = str(minor)
+
+        # maybe derive lat/lng from the center of the place
+        if args.set_latlng_from_place and 'placeId' in beacon:
+            self.lat_lng_from_place(beacon, args.maps_api_key)
 
         try:
             request = self._client.beacons() \
