@@ -43,7 +43,7 @@ from googleapiclient.errors import HttpError
 __author__ = 'afitzgibbon@google.com (Andrew Fitz Gibbon)'
 
 # Debug controls, for now, whether API responses are printed to stdout when received.
-DEBUG = False 
+DEBUG = False
 
 # Except maybe for 'API version', these shouldn't ever change.
 PROXIMITY_API_NAME = 'proximitybeacon'
@@ -305,9 +305,6 @@ class PbApi(object):
                                       'and create matching ibeacon_ properties for each.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
-        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
-                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
-                                      'the geocoder API active.')
         beacon_arg_group = args_parser.add_mutually_exclusive_group(required=True)
         beacon_arg_group.add_argument('--beacon-json-file',
                                       help='Path to a plain-text JSON file containing the beacon\'s description')
