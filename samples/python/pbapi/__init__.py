@@ -679,6 +679,7 @@ class PbApi(object):
                                       'If IBEACON, CSV must also contain uuid (or id), major, and minor fields.')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that should own the beacons')
+        # These next two args will pass through to the single-record register_beacon() method.
         args_parser.add_argument('--maps-api-key', metavar='API_KEY',
                                  help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
                                       'the geocoder API active.')
