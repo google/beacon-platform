@@ -593,7 +593,7 @@ class PbApi(object):
 
     def set_places(self, arguments):
         """
-        Given a file with beacon_id{sep}address, find the matching place ID and update the PBAPI record with it.
+        Given a file with beacon_ids and place_ids, add the place_ids to the beacon registrations.
 
         Args:
             arguments: list of arguments passed from CLI. Pass ['--help'] for details.
@@ -607,9 +607,6 @@ class PbApi(object):
                                  required=True,
                                  help='Path to CSV containing beacon,location tuples. Must contain a `beacon_name` ' +
                                       'key and a `place_id` key.')
-        args_parser.add_argument('--maps-api-key', metavar='API_KEY',
-                                 help='Maps API key with which to call geocoder or places APIs. Must at minimum have ' +
-                                      'the geocoder API active.')
         args_parser.add_argument('--project-id',
                                  help='Google developer project ID that owns the beacons')
         args_parser.add_argument('--print-results',
