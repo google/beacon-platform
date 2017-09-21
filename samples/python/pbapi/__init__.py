@@ -43,7 +43,7 @@ from googleapiclient.errors import HttpError
 __author__ = 'afitzgibbon@google.com (Andrew Fitz Gibbon)'
 
 # Debug controls, for now, whether API responses are printed to stdout when received.
-DEBUG = False
+DEBUG = False 
 
 # Except maybe for 'API version', these shouldn't ever change.
 PROXIMITY_API_NAME = 'proximitybeacon'
@@ -826,6 +826,10 @@ class PbApi(object):
         """
         Set the beacon's lat/lng to the center of the place.
         """
+        if maps_api_key is None or len(maps_api_key) is 0:
+            print "[FATAL] api key is required to call places API, was [{}].".format(api_key)
+            exit(1)
+        
         if 'latLng' in beacon:
             if DEBUG:
                 print('Beacon already has lat/lng, skipping so as not to erase it.')
@@ -839,9 +843,23 @@ class PbApi(object):
         if DEBUG:
             print('Attempting to set lat/lng based on place id {}'.format(beacon['placeId']))
 
-        lat_lng = PbApi._placeid_to_latlng(maps_api_key, beacon['placeId'])
-        if lat_lng is not None:
-               beacon['latLng'] = {'latitude': lat_lng['lat'], 'longitude': lat_lng['lng']}
+        places_api_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid={}&key={}'.format(beacon['placeId'], maps_api_key)
+        req = urllib2.urlopen(places_api_url)
+        response = json.loads(req.read())
+
+        lat_lng = None
+        if response and response['status'] == 'OK':
+            result = response['result']
+            if result is not None and result['geometry']['location'] is not None:
+                lat_lng = result['geometry']['location']
+        elif 'error_message' in response:
+            print '[ERROR] Failed to call places api: {}'.format(response['error_message'])
+            return
+        else:
+            print '[ERROR] Failed to call places api: {}'.format(response['status'])
+            return
+
+        beacon['latLng'] = {'latitude': lat_lng['lat'], 'longitude': lat_lng['lng']}
         if DEBUG:
             print('Beacon lat/lng are: {}'.format(lat_lng))
 
@@ -872,39 +890,6 @@ class PbApi(object):
         h = '%x' % n
         s = ('0' * (len(h) % 2) + h).zfill(length * 2)
         return s
-
-    @staticmethod
-    def _placeid_to_latlng(api_key, place_id):
-        """
-        Calls the Google Places API to lookup the lat/lng location of a given place.
-
-        Args:
-            api_key: Geocoder-enabled API key
-            place_id: The (string) place id for given place, e.g. "ChIJ4abvVDwbdkgRDZVFR7A6Bcc"
-
-        Returns:
-            an object e.g. {"lat":51.533241,"lng":-0.126002} if found.
-        """
-        if api_key is None or len(api_key) is 0:
-            print "[ERROR] api key is required to call places API, was [{]}.".format(api_key)
-            return
-
-        places_api_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid={}&key={}'.format(place_id, api_key)
-
-        req = urllib2.urlopen(places_api_url)
-        response = json.loads(req.read())
-
-        lat_lng = None
-        if response and response['status'] == 'OK':
-            result = response['result']
-            if result is not None and result['geometry']['location'] is not None:
-                lat_lng = result['geometry']['location']
-        elif 'error_message' in response:
-            print '[ERROR] Failed to call places api: {}'.format(response['error_message'])
-        else:
-            print '[ERROR] Failed to call places api: {}'.format(response['status'])
-
-        return lat_lng
 
     @staticmethod
     def _validate_attachment_name(name):
