@@ -308,7 +308,9 @@ class PbApi(object):
                                       'the geocoder API active.')
         args_parser.add_argument('--set-latlng-from-place',
                                  action='store_true',
-                                 help='Use the center of the place as the latitude and longitude of the beacon.')
+                                 help='If the given beacon data has no latitude/longitude but does have a place_id, ' +
+                                      'call Google Places API to determine the center of the given place and use that ' +
+                                      'as the latitude and longitude of the beacon. Requires a --maps-api-key.')
         args_parser.add_argument('--print-results',
                                  action='store_true', default=False, help='Print to stdout the result.')
         beacon_arg_group = args_parser.add_mutually_exclusive_group(required=True)
@@ -854,7 +856,8 @@ class PbApi(object):
         if DEBUG:
             print('Attempting to set lat/lng based on place id {}'.format(beacon['placeId']))
 
-        places_api_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid={}&key={}'.format(beacon['placeId'], maps_api_key)
+        places_api_url = ('https://maps.googleapis.com/maps/api/place/details/json'
+                         '?placeid={}&key={}'.format(beacon['placeId'], maps_api_key))
         req = urllib2.urlopen(places_api_url)
         response = json.loads(req.read())
 
