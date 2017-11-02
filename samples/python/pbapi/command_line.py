@@ -44,6 +44,8 @@ def main():
                         help='OAuth2 access token ')
     parser.add_argument('--client-secret',
                         help='Path to a JSON file containing oauth client ID secrets.')
+    parser.add_argument('--print-results',
+                        action='store_true', default=False, help='Print the command\'s return value to stdout.')
 
     args, extra_args = parser.parse_known_args()
 
@@ -81,7 +83,7 @@ def main():
     if args.command in aliases:
         try:
             result = aliases[args.command](pb_client, extra_args + ['--print-results'])
-            if result is not None:
+            if result is not None and args.print_results:
                 print result
         except ValueError, e:
             print('"%s" failed with message %s' % (args.command, e.message))
