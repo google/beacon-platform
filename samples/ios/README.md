@@ -14,7 +14,7 @@ CocoaPod based and quite easy to get running.
 **FOLLOW THESE INSTRUCTIONS SUPER CAREFULLY!**
 
 0. Make sure your computer has CocoaPods installed,
-   [http://cocoapods.org](http://cocoapods.org), as well as Xcode 6 (We've
+   [https://cocoapods.org](https://cocoapods.org), as well as Xcode 6 (We've
    had reports that Xcode 7 betas might be problematic at this point.)
 
 1. To get all the component pieces.
@@ -116,7 +116,7 @@ CocoaPod based and quite easy to get running.
        # php gen_fake_beacons.php
 
    Now when you build and run the simulator, there will be 10 beacons that
-   you can play around with registering, activating, deactivating, etc, and
+   you can play around with registering, activating, deactivating, etc., and
    be able to verify that everything is working properly before actually
    modifying real-world beacon hardware.
 
