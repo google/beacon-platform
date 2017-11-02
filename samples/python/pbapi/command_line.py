@@ -45,7 +45,7 @@ def main():
     parser.add_argument('--client-secret',
                         help='Path to a JSON file containing oauth client ID secrets.')
     parser.add_argument('--print-results',
-                        action='store_true', default=False, help='Print to stdout the result.')
+                        action='store_true', default=False, help='Print the command\'s return value to stdout.')
 
     args, extra_args = parser.parse_known_args()
 
