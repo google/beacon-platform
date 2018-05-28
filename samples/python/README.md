@@ -18,6 +18,8 @@ Other tools for the PBAPI that have similar function include:
 This project is based around the [Python Google API client](https://developers.google.com/api-client-library/python/)
 for which you can find installation instructions [here](https://developers.google.com/api-client-library/python/start/installation).
 
+Note: This version of API is ONLY compatible with Python 2.7
+
 For all other dependencies, just run setup.py:
 
   python setup.py install
